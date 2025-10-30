@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import gspread
 from google.oauth2.service_account import Credentials
+import json
 from dotenv import load_dotenv
 from datetime import datetime, date, timedelta, timezone
 import os
@@ -161,29 +162,63 @@ def get_booked_dates_by_unit(room_id, start_date, end_date):
     
     return availability
 
+# def append_to_google_sheet(data):
+#     load_dotenv()
+
+#     creds_path = os.getenv("GOOGLE_CREDS_PATH")
+#     sheet_id = os.getenv("GOOGLE_SHEET_ID")
+
+#     # Authenticate using the service account file
+#     creds = Credentials.from_service_account_file(
+#         creds_path,
+#         scopes=["https://www.googleapis.com/auth/spreadsheets"]
+#     )
+
+#     client = gspread.authorize(creds)
+#     sheet = client.open_by_key(sheet_id).sheet1
+
+#     # Append a new row with booking details
+#     sheet.append_row([
+#         data.get("room_id"),
+#         data.get("check_in"),
+#         data.get("guests"),
+#         data.get("check_out"),
+#         data.get("created_at")
+#     ])
+
 def append_to_google_sheet(data):
-    load_dotenv()
+    # Get JSON string from env var
+    creds_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
+    if not creds_json:
+        print("⚠️ Google Sheets disabled: GOOGLE_SERVICE_ACCOUNT_JSON not set")
+        return
 
-    creds_path = os.getenv("GOOGLE_CREDS_PATH")
     sheet_id = os.getenv("GOOGLE_SHEET_ID")
+    if not sheet_id:
+        print("⚠️ Google Sheets disabled: GOOGLE_SHEET_ID not set")
+        return
 
-    # Authenticate using the service account file
-    creds = Credentials.from_service_account_file(
-        creds_path,
-        scopes=["https://www.googleapis.com/auth/spreadsheets"]
-    )
+    try:
+        # Parse JSON and create credentials
+        creds_dict = json.loads(creds_json)
+        creds = Credentials.from_service_account_info(
+            creds_dict,
+            scopes=["https://www.googleapis.com/auth/spreadsheets"]
+        )
 
-    client = gspread.authorize(creds)
-    sheet = client.open_by_key(sheet_id).sheet1
+        client = gspread.authorize(creds)
+        sheet = client.open_by_key(sheet_id).sheet1
 
-    # Append a new row with booking details
-    sheet.append_row([
-        data.get("room_id"),
-        data.get("check_in"),
-        data.get("guests"),
-        data.get("check_out"),
-        data.get("created_at")
-    ])
+        sheet.append_row([
+            data.get("room_id"),
+            data.get("check_in"),
+            data.get("guests"),
+            data.get("check_out"),
+            data.get("created_at")
+        ])
+        print("✅ Google Sheets updated successfully.")
+    except Exception as e:
+        print(f"⚠️ Google Sheets append failed: {e}")
 
 # Routes
 @app.route('/')
@@ -286,96 +321,6 @@ def calendar_view(room_id):
                          check_in=check_in, 
                          check_out=check_out, 
                          guests=guests)
-
-# @app.route('/booking/confirm', methods=['POST'])
-# def confirm_booking():
-#     try:
-#         # Get form data
-#         room_id = request.form.get('room_id', type=int)
-#         check_in_str = request.form.get('check_in')
-#         check_out_str = request.form.get('check_out')
-#         guests = request.form.get('guests', type=int)
-        
-#         # Validate required fields
-#         if not all([room_id, check_in_str, check_out_str, guests]):
-#             missing = []
-#             if not room_id: missing.append('room_id')
-#             if not check_in_str: missing.append('check_in')
-#             if not check_out_str: missing.append('check_out')
-#             if not guests: missing.append('guests')
-#             return render_template('partials/booking_error.html', 
-#                                  error=f'Missing required fields: {", ".join(missing)}'), 400
-        
-#         # Parse dates
-#         check_in = datetime.strptime(check_in_str, '%Y-%m-%d').date()
-#         check_out = datetime.strptime(check_out_str, '%Y-%m-%d').date()
-        
-#         # Validate dates
-#         if check_in >= check_out:
-#             return render_template('partials/booking_error.html', 
-#                                  error='Check-out date must be after check-in date'), 400
-        
-#         if check_in < date.today():
-#             return render_template('partials/booking_error.html', 
-#                                  error='Check-in date cannot be in the past'), 400
-        
-#         # Get room
-#         # room = Room.query.get_or_404(room_id)
-#         room = db.session.get(Room, room_id)
-
-        
-#         # Validate guest count
-#         if guests < room.min_guests or guests > room.max_guests:
-#             return render_template('partials/booking_error.html', 
-#                                  error=f'Guest count must be between {room.min_guests} and {room.max_guests}'), 400
-        
-#         # Check if at least one unit is available
-#         available_units = get_available_units(room_id, check_in, check_out)
-#         if available_units <= 0:
-#             return render_template('partials/booking_error.html', 
-#                                  error=f'No units available for {room.name} on selected dates. All {room.total_units} unit(s) are booked.'), 400
-        
-#         # Create booking
-#         booking = Booking(
-#             room_id=room_id,
-#             check_in=check_in,
-#             check_out=check_out,
-#             guests=guests
-#         )
-        
-#         db.session.add(booking)
-#         db.session.commit()
-
-#         append_to_google_sheet({
-#             "room_id": room_id,
-#             "check_in": check_in.strftime('%Y-%m-%d'),
-#             "check_out": check_out.strftime('%Y-%m-%d'),
-#             "guests": guests,
-#             "created_at": datetime.utcnow().isoformat()
-#         })
-
-        
-#         print(f"✅ Booking created successfully: ID {booking.id}, Room: {room.name}, Units remaining: {available_units - 1}/{room.total_units}")
-        
-#         nights = (check_out - check_in).days
-#         total_price = room.price * nights
-        
-#         return render_template('partials/booking_confirmation.html', 
-#                              room=room, 
-#                              booking=booking, 
-#                              total_price=total_price, 
-#                              nights=nights,
-#                              remaining_units=available_units - 1)
-    
-#     except ValueError as e:
-#         return render_template('partials/booking_error.html', 
-#                              error='Invalid date format'), 400
-#     except Exception as e:
-#         print(f"❌ Booking error: {str(e)}")
-#         import traceback
-#         traceback.print_exc()
-#         return render_template('partials/booking_error.html', 
-#                              error='An error occurred while processing your booking'), 500
 
 @app.route('/booking/confirm', methods=['POST'])
 def confirm_booking():
