@@ -97,13 +97,14 @@ class Booking(db.Model):
     guests = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-with app.app_context():
-    db.create_all()
-    if Room.query.count() == 0:
-        # Add your sample data here (copy from init_db)
-        # ... (your rooms_data loop)
-        db.session.commit()
-        print("✅ Sample data loaded!")
+# I run this to fix production issue in railway
+# with app.app_context():
+#     db.create_all()
+#     if Room.query.count() == 0:
+#         # Add your sample data here (copy from init_db)
+#         # ... (your rooms_data loop)
+#         db.session.commit()
+#         print("✅ Sample data loaded!")
 
 # Helper functions
 def get_available_units(room_id, check_in, check_out):
@@ -604,6 +605,47 @@ def init_db():
             db.session.commit()
             print("✅ Database initialized with sample data!")
             print("📊 Room units: Deluxe Room (2), Deluxe Room 2 (2), Others (1 each)")
+
+def initialize_sample_data():
+    with app.app_context():
+        db.create_all()
+        if Room.query.count() == 0:
+            print("🌱 Loading sample room data...")
+            # Paste your rooms_data list here (from init_db)
+            rooms_data = [ ... ]  # <-- your full list
+
+            for room_data in rooms_data:
+                room = Room(
+                    name=room_data['name'].strip(),
+                    image=room_data['image'].strip(),
+                    beds=room_data['beds'],
+                    min_guests=room_data['min_guests'],
+                    max_guests=room_data['max_guests'],
+                    price=room_data['price'],
+                    total_units=room_data['total_units'],
+                    description=room_data['description']
+                )
+                db.session.add(room)
+                db.session.flush()
+
+                for amenity in room_data['amenities']:
+                    db.session.add(Amenity(room_id=room.id, name=amenity.strip()))
+
+                for i, img in enumerate(room_data['gallery']):
+                    db.session.add(GalleryImage(
+                        room_id=room.id,
+                        image_url=img.strip(),
+                        order=i
+                    ))
+
+            db.session.commit()
+            print("✅ Sample data loaded!")
+        else:
+            print("✅ Data already exists. Skipping initialization.")
+
+# Run initialization only in production (not local dev)
+if os.environ.get("FLASK_ENV") != "development":
+    initialize_sample_data()
 
 if __name__ == '__main__':
     init_db()
