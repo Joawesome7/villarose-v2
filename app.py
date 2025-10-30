@@ -17,6 +17,17 @@ app.secret_key = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KE
 
 # --- DATABASE ---
 database_url = os.environ.get("DATABASE_URL")
+# Debug - print what we're actually getting
+print(f"🔍 DATABASE_URL exists: {database_url is not None}")
+if database_url:
+    # Parse to show components without exposing full password
+    from urllib.parse import urlparse
+    parsed = urlparse(database_url)
+    print(f"🔍 Host: {parsed.hostname}")
+    print(f"🔍 Port: {parsed.port}")
+    print(f"🔍 User: {parsed.username}")
+    print(f"🔍 Password starts with: {parsed.password[:5] if parsed.password else 'NONE'}...")
+    print(f"🔍 Database: {parsed.path[1:]}")
 
 # Debug logging (remove after fixing)
 print(f"🔍 FLASK_ENV: {os.environ.get('FLASK_ENV')}")
