@@ -6,9 +6,10 @@ from dotenv import load_dotenv
 from datetime import datetime, date, timedelta, timezone
 import os
 
-app = Flask(__name__)
+if os.getenv("FLASK_ENV") == "development":
+    load_dotenv()
 
-load_dotenv()
+app = Flask(__name__)
 
 # app.secret_key = os.environ.get("FLASK_SECRET_KEY", "devkey")
 
@@ -16,20 +17,26 @@ load_dotenv()
 # app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Load .env only in development (Railway doesn't use .env)
-if os.getenv("FLASK_ENV") == "development":
-    load_dotenv()
 
 # Set secret key — required for sessions, flashes, etc.
 app.secret_key = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY") or "dev-fallback-key-unsafe"
 
 # Handle DATABASE_URL (Railway uses 'postgres://', SQLAlchemy needs 'postgresql://')
 database_url = os.environ.get('DATABASE_URL')
+
 if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 
-# Fallback to local DB if no DATABASE_URL (for local dev)
 if not database_url:
-    database_url = 'postgresql://localhost/room_booking'
+    # Only allow localhost fallback in development
+    if os.getenv("FLASK_ENV") == "development":
+        database_url = 'postgresql://localhost/room_booking'
+    else:
+        raise RuntimeError("❌ DATABASE_URL is not set! This is required in production.")
+
+# Fix for SQLAlchemy 1.4+
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
