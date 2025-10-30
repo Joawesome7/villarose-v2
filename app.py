@@ -612,7 +612,104 @@ def initialize_sample_data():
         if Room.query.count() == 0:
             print("🌱 Loading sample room data...")
             # Paste your rooms_data list here (from init_db)
-            rooms_data = [ ... ]  # <-- your full list
+            rooms_data = [
+                {
+                    'name': 'Bungalow',
+                    'image': 'https://placehold.co/400x300/667eea/white?text=Bungalow',
+                    'beds': '1 Bedroom',
+                    'min_guests': 1,
+                    'max_guests': 2,
+                    'price': 10000,
+                    'total_units': 1,  # 1 unit
+                    'description': 'Experience luxury in our spacious Deluxe King Room featuring premium bedding, a 55-inch smart TV, and a private balcony with city views. Perfect for couples seeking comfort and style.',
+                    'amenities': ['Service Kitchen / Laundry', 'Parking', 'Sofa Bed', 'Refrigerator', 'AC', 'Balcony', 'Dining Kitchen', 'Water Heater'],
+                    'gallery': [
+                        'https://placehold.co/600x400/667eea/white?text=Deluxe+King+View+1',
+                        'https://placehold.co/600x400/764ba2/white?text=Deluxe+King+Bathroom',
+                        'https://placehold.co/600x400/f093fb/white?text=Deluxe+King+Balcony'
+                    ]
+                },
+                {
+                    'name': 'Deluxe Room',
+                    'image': 'https://placehold.co/400x300/764ba2/white?text=Deluxe',
+                    'beds': 'Queen Size Bed /W Pull Out Bed',
+                    'min_guests': 2,
+                    'max_guests': 3,
+                    'price': 3500,
+                    'total_units': 2,  # 2 units
+                    'description': 'Our Deluxe room offers separate living and sleeping areas, perfect for business travelers or small families. Features include a work desk, premium entertainment system, and access to executive lounge.',
+                    'amenities': ['Ocean View / Nature View', 'Shared Toilet Bath Room', '2nd Floor Level With Plated Breakfast'],
+                    'gallery': [
+                        'https://placehold.co/600x400/764ba2/white?text=Executive+Suite+Living',
+                        'https://placehold.co/600x400/4facfe/white?text=Executive+Suite+Bedroom',
+                        'https://placehold.co/600x400/43e97b/white?text=Executive+Suite+Bathroom'
+                    ]
+                },
+                {
+                    'name': 'Suite Room',
+                    'image': 'https://placehold.co/400x300/f093fb/white?text=Suite',
+                    'beds': 'King Size Bed',
+                    'min_guests': 1,
+                    'max_guests': 2,
+                    'price': 4500,
+                    'total_units': 1,  # 1 unit
+                    'description': 'Comfortable and affordable, our Standard Double Room is ideal for families or groups. Features two comfortable double beds, modern amenities, and a cozy atmosphere for a restful stay.',
+                    'amenities': ['Ocean View', 'Pool View', 'Toilet and Bath W/ Bath Thub', '2nd Floor Level With Plated Breakfast'],
+                    'gallery': [
+                        'https://placehold.co/600x400/f093fb/white?text=Standard+Double+Room',
+                        'https://placehold.co/600x400/fbbf24/white?text=Standard+Double+Beds',
+                        'https://placehold.co/600x400/4facfe/white?text=Standard+Double+Bathroom'
+                    ]
+                },
+                {
+                    'name': 'Executive',
+                    'image': 'https://placehold.co/400x300/4facfe/white?text=Executive',
+                    'beds': 'Queen Size Bed W/ Pull Out Bed',
+                    'min_guests': 2,
+                    'max_guests': 3,
+                    'price': 4000,
+                    'total_units': 1,  # 1 unit
+                    'description': 'Wake up to breathtaking ocean views in our Premium Ocean View room. Features a king bed with luxury linens, floor-to-ceiling windows, and a private terrace overlooking the sea.',
+                    'amenities': ['Ocean View', 'Pool View', 'Toilet & Bath', 'Ground Floor Level With Plated Breakfast'],
+                    'gallery': [
+                        'https://placehold.co/600x400/4facfe/white?text=Ocean+View+Room',
+                        'https://placehold.co/600x400/43e97b/white?text=Ocean+View+Terrace',
+                        'https://placehold.co/600x400/fbbf24/white?text=Ocean+View+Bathroom'
+                    ]
+                },
+                {
+                    'name': 'Family Room',
+                    'image': 'https://placehold.co/400x300/43e97b/white?text=Family+Room',
+                    'beds': '2 Bunk Beds',
+                    'min_guests': 2,
+                    'max_guests': 4,
+                    'price': 4000,
+                    'total_units': 1,  # 1 unit
+                    'description': 'Designed for families, our spacious Family Room features two queen beds, ample space for children to play, and family-friendly amenities. Includes access to our kids club and family activities.',
+                    'amenities': ['Shared Toilet & Bath', 'Plated Breakfast'],
+                    'gallery': [
+                        'https://placehold.co/600x400/43e97b/white?text=Family+Room+View',
+                        'https://placehold.co/600x400/fbbf24/white?text=Family+Room+Beds',
+                        'https://placehold.co/600x400/667eea/white?text=Family+Room+Bathroom'
+                    ]
+                },
+                {
+                    'name': 'Deluxe Room 2',
+                    'image': 'https://placehold.co/400x300/fbbf24/white?text=Deluxe+02+Room',
+                    'beds': '1 Queen Bed & Twin Size Bed',
+                    'min_guests': 2,
+                    'max_guests': 3,
+                    'price': 3500,
+                    'total_units': 2,  # 2 units
+                    'description': 'Perfect for business travelers, our Business Studio combines work and relaxation with a comfortable queen bed, ergonomic workspace, high-speed internet, and business center access.',
+                    'amenities': ['Shared Toilet & Bath', 'Plated Breakfast'],
+                    'gallery': [
+                        'https://placehold.co/600x400/fbbf24/white?text=Business+Studio+Room',
+                        'https://placehold.co/600x400/667eea/white?text=Business+Studio+Desk',
+                        'https://placehold.co/600x400/764ba2/white?text=Business+Studio+Bathroom'
+                    ]
+                }
+            ]
 
             for room_data in rooms_data:
                 room = Room(
