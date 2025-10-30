@@ -52,9 +52,6 @@ app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
-with app.app_context():
-    db.create_all()
-    print("✅ Database tables created successfully!")
 
 # Models
 class Room(db.Model):
@@ -99,6 +96,14 @@ class Booking(db.Model):
     check_out = db.Column(db.Date, nullable=False)
     guests = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+with app.app_context():
+    db.create_all()
+    if Room.query.count() == 0:
+        # Add your sample data here (copy from init_db)
+        # ... (your rooms_data loop)
+        db.session.commit()
+        print("✅ Sample data loaded!")
 
 # Helper functions
 def get_available_units(room_id, check_in, check_out):
