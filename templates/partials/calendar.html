@@ -1,0 +1,341 @@
+<div class="bg-white rounded-2xl shadow-xl p-6" id="calendarWidget">
+  <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+    Select Your Dates
+  </h3>
+
+  <!-- Calendar Navigation -->
+  <div class="flex items-center justify-between mb-4">
+    <button
+      onclick="changeMonth(-1)"
+      class="p-2 hover:bg-gray-100 rounded-lg transition"
+      aria-label="Previous month"
+    >
+      <svg
+        class="w-6 h-6 text-gray-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M15 19l-7-7 7-7"
+        />
+      </svg>
+    </button>
+    <h4 class="text-xl font-semibold text-gray-800" id="monthYearDisplay"></h4>
+    <button
+      onclick="changeMonth(1)"
+      class="p-2 hover:bg-gray-100 rounded-lg transition"
+      aria-label="Next month"
+    >
+      <svg
+        class="w-6 h-6 text-gray-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 5l7 7-7 7"
+        />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Calendar Grid -->
+  <div class="mb-6">
+    <!-- Day Headers -->
+    <div class="grid grid-cols-7 gap-1 mb-2">
+      <div class="text-center text-sm font-semibold text-gray-600 py-2">
+        Sun
+      </div>
+      <div class="text-center text-sm font-semibold text-gray-600 py-2">
+        Mon
+      </div>
+      <div class="text-center text-sm font-semibold text-gray-600 py-2">
+        Tue
+      </div>
+      <div class="text-center text-sm font-semibold text-gray-600 py-2">
+        Wed
+      </div>
+      <div class="text-center text-sm font-semibold text-gray-600 py-2">
+        Thu
+      </div>
+      <div class="text-center text-sm font-semibold text-gray-600 py-2">
+        Fri
+      </div>
+      <div class="text-center text-sm font-semibold text-gray-600 py-2">
+        Sat
+      </div>
+    </div>
+
+    <!-- Calendar Days -->
+    <div id="calendarDays" class="grid grid-cols-7 gap-1">
+      <!-- Days will be populated by JavaScript -->
+    </div>
+  </div>
+
+  <!-- Selected Dates Display -->
+  <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-4">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <p class="text-sm text-gray-600 mb-1">Check-in</p>
+        <p class="font-semibold text-gray-800" id="selectedCheckIn">
+          {{ check_in }}
+        </p>
+      </div>
+      <div>
+        <p class="text-sm text-gray-600 mb-1">Check-out</p>
+        <p class="font-semibold text-gray-800" id="selectedCheckOut">
+          {{ check_out }}
+        </p>
+      </div>
+    </div>
+    <div class="mt-3 pt-3 border-t border-green-200">
+      <p class="text-sm text-gray-600">
+        Nights: <span class="font-bold text-green-700" id="nightsCount">1</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="flex flex-wrap gap-4 text-sm mb-4">
+    <div class="flex items-center gap-2">
+      <div class="w-6 h-6 bg-green-500 rounded"></div>
+      <span class="text-gray-600">Selected</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="w-6 h-6 bg-red-200 rounded"></div>
+      <span class="text-gray-600">Booked</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="w-6 h-6 bg-gray-100 rounded"></div>
+      <span class="text-gray-600">Available</span>
+    </div>
+  </div>
+
+  <!-- Apply Button -->
+  <button
+    onclick="applyCalendarDates()"
+    class="w-full bg-gradient-to-r from-green-600 to-green-800 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200"
+  >
+    Apply Dates
+  </button>
+</div>
+
+<script>
+  // Calendar state - make it global so parent page can access
+  window.currentMonth = new Date().getMonth();
+  window.currentYear = new Date().getFullYear();
+  window.bookedDates = [];
+  window.selectedCheckIn = "{{ check_in }}";
+  window.selectedCheckOut = "{{ check_out }}";
+  window.selectingCheckIn = true;
+  window.calendarRoomId = "{{ room.id }}";
+
+  // Load availability data
+  async function loadAvailability() {
+    try {
+      const response = await fetch(
+        `/api/room/${window.calendarRoomId}/availability?month=${
+          window.currentMonth + 1
+        }&year=${window.currentYear}`
+      );
+      const data = await response.json();
+      window.bookedDates = data.booked_dates;
+      renderCalendar();
+    } catch (error) {
+      console.error("Error loading availability:", error);
+    }
+  }
+
+  function renderCalendar() {
+    const monthYearDisplay = document.getElementById("monthYearDisplay");
+    const calendarDays = document.getElementById("calendarDays");
+
+    // Update month/year display
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    monthYearDisplay.textContent = `${monthNames[window.currentMonth]} ${
+      window.currentYear
+    }`;
+
+    // Clear previous days
+    calendarDays.innerHTML = "";
+
+    // Get first day of month and number of days
+    const firstDay = new Date(
+      window.currentYear,
+      window.currentMonth,
+      1
+    ).getDay();
+    const daysInMonth = new Date(
+      window.currentYear,
+      window.currentMonth + 1,
+      0
+    ).getDate();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Add empty cells for days before month starts
+    for (let i = 0; i < firstDay; i++) {
+      const emptyDiv = document.createElement("div");
+      calendarDays.appendChild(emptyDiv);
+    }
+
+    // Add days of month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateObj = new Date(window.currentYear, window.currentMonth, day);
+      const dateStr = dateObj.toISOString().split("T")[0];
+      const isPast = dateObj < today;
+      const isBooked = window.bookedDates.includes(dateStr);
+      const isCheckIn = dateStr === window.selectedCheckIn;
+      const isCheckOut = dateStr === window.selectedCheckOut;
+      const isInRange = isDateInRange(dateStr);
+
+      const dayDiv = document.createElement("div");
+      dayDiv.textContent = day;
+      dayDiv.className =
+        "text-center py-2 rounded-lg cursor-pointer transition-all duration-200 ";
+
+      if (isPast || isBooked) {
+        dayDiv.className +=
+          "bg-red-100 text-red-400 cursor-not-allowed line-through";
+      } else if (isCheckIn || isCheckOut) {
+        dayDiv.className +=
+          "bg-green-600 text-white font-bold ring-2 ring-green-400";
+      } else if (isInRange) {
+        dayDiv.className += "bg-green-200 text-green-800 font-semibold";
+      } else {
+        dayDiv.className +=
+          "bg-gray-50 hover:bg-green-100 hover:text-green-700 hover:font-semibold";
+      }
+
+      if (!isPast && !isBooked) {
+        dayDiv.onclick = () => selectDate(dateStr);
+      }
+
+      calendarDays.appendChild(dayDiv);
+    }
+  }
+
+  function isDateInRange(dateStr) {
+    if (!window.selectedCheckIn || !window.selectedCheckOut) return false;
+    return (
+      dateStr > window.selectedCheckIn && dateStr < window.selectedCheckOut
+    );
+  }
+
+  function selectDate(dateStr) {
+    if (
+      window.selectingCheckIn ||
+      !window.selectedCheckIn ||
+      dateStr <= window.selectedCheckIn
+    ) {
+      window.selectedCheckIn = dateStr;
+      window.selectedCheckOut = null;
+      window.selectingCheckIn = false;
+      document.getElementById("selectedCheckIn").textContent =
+        formatDate(dateStr);
+      document.getElementById("selectedCheckOut").textContent = "Select date";
+      document.getElementById("nightsCount").textContent = "0";
+    } else {
+      // Check if there are any booked dates between check-in and check-out
+      const checkInDate = new Date(window.selectedCheckIn);
+      const checkOutDate = new Date(dateStr);
+      let hasBookedInRange = false;
+
+      for (
+        let d = new Date(checkInDate);
+        d < checkOutDate;
+        d.setDate(d.getDate() + 1)
+      ) {
+        const checkDate = d.toISOString().split("T")[0];
+        if (window.bookedDates.includes(checkDate)) {
+          hasBookedInRange = true;
+          break;
+        }
+      }
+
+      if (hasBookedInRange) {
+        alert(
+          "There are booked dates in your selected range. Please select different dates."
+        );
+        return;
+      }
+
+      window.selectedCheckOut = dateStr;
+      window.selectingCheckIn = true;
+      document.getElementById("selectedCheckOut").textContent =
+        formatDate(dateStr);
+
+      // Calculate nights
+      const nights = Math.ceil(
+        (new Date(dateStr) - new Date(window.selectedCheckIn)) /
+          (1000 * 60 * 60 * 24)
+      );
+      document.getElementById("nightsCount").textContent = nights;
+    }
+
+    renderCalendar();
+  }
+
+  function formatDate(dateStr) {
+    const date = new Date(dateStr + "T00:00:00");
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+
+  function changeMonth(delta) {
+    window.currentMonth += delta;
+    if (window.currentMonth < 0) {
+      window.currentMonth = 11;
+      window.currentYear--;
+    } else if (window.currentMonth > 11) {
+      window.currentMonth = 0;
+      window.currentYear++;
+    }
+    loadAvailability();
+  }
+
+  function applyCalendarDates() {
+    if (!window.selectedCheckIn || !window.selectedCheckOut) {
+      alert("Please select both check-in and check-out dates");
+      return;
+    }
+
+    // Call the global applyDates function if it exists (from parent page)
+    if (typeof window.applyDates === "function") {
+      window.applyDates();
+    } else {
+      // Fallback behavior
+      alert(
+        `Dates selected!\nCheck-in: ${formatDate(
+          window.selectedCheckIn
+        )}\nCheck-out: ${formatDate(window.selectedCheckOut)}`
+      );
+    }
+  }
+
+  // Initialize calendar on load
+  loadAvailability();
+</script>

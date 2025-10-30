@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+*.pyo
+*.pyd
+*.sqlite3
+
+# Environment
+.env
+villa-rose-booking-1019364a9a80.json
+
+# Docker artifacts
+*.log

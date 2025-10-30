@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}VILLA ROSE{% endblock %}</title>
+    {% block meta %}
+    <title>
+      Villa Rose | Beachfront Villa in San Miguel, Baras, Catanduanes
+    </title>
+    <meta
+      name="description"
+      content="Book your stay at Villa Rose in Baranggay San Miguel, Baras, Catanduanes. Enjoy cozy rooms, ocean views, and warm island hospitality — your perfect getaway in Catanduanes."
+    />
+    <meta
+      name="keywords"
+      content="Villa Rose Catanduanes, Villa Rose Baras, beachfront villa, resort Baras Catanduanes, villa booking, island getaway Philippines"
+    />
+    <meta
+      property="og:title"
+      content="Villa Rose | Beachfront Villa in Baranggay San Miguel, Baras, Catanduanes"
+    />
+    <meta
+      property="og:description"
+      content="Relax at Villa Rose in San Miguel, Baras, Catanduanes. Book your beachfront stay and experience the beauty of Catanduanes with comfort and charm."
+    />
+    <meta
+      property="og:image"
+      content="{{ url_for('static', filename='images/header.jpg', _external=True) }}"
+    />
+    <meta property="og:type" content="website" />
+    {% endblock %}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .fade-in {
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      .full-width-section {
+        width: 100vw;
+        margin-left: calc(-50vw + 50%);
+        margin-right: calc(-50vw + 50%);
+      }
+
+      .header-search-container {
+        background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+          url("/static/images/exterior.jpg") center/cover no-repeat;
+        width: 100vw;
+        margin-left: calc(-50vw + 50%);
+        margin-right: calc(-50vw + 50%);
+        height: 600px; /* Fixed height */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body class="bg-gradient-to-br from-green-600 to-green-800 min-h-screen">
+    {% block content %}{% endblock %}
+
+    <script>
+      // Add fade-in animation to HTMX loaded content
+      document.body.addEventListener("htmx:afterSwap", function (event) {
+        event.detail.target.classList.add("fade-in");
+      });
+
+      document.body.addEventListener("htmx:responseError", function (evt) {
+        const target = evt.detail.target;
+        target.innerHTML = evt.detail.xhr.responseText;
+      });
+    </script>
+  </body>
+</html>

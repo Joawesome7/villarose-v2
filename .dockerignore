@@ -1,0 +1,10 @@
+venv
+__pycache__
+*.pyc
+.env
+.git
+.gitignore
+*.db
+*.log
+secrets/
+villa-rose-booking-1019364a9a80.json

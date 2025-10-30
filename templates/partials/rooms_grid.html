@@ -1,0 +1,214 @@
+{% if rooms %} {% for room in rooms %}
+<div
+  class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
+>
+  <!-- Room Image -->
+  <div class="relative h-64 overflow-hidden">
+    <img
+      src="{{ room.image }}"
+      alt="{{ room.name }}"
+      class="w-full h-full object-cover"
+    />
+    <div
+      class="absolute top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-full font-bold shadow-lg"
+    >
+      &#8369;{{ "{:,}".format(room.price) }}
+    </div>
+
+    <!-- Unit Availability Badge -->
+    {% if room.available_units is defined %} {% if room.available_units == 0 %}
+    <div
+      class="absolute top-4 left-4 bg-red-600 text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg"
+    >
+      Fully Booked
+    </div>
+    {% elif room.available_units <= 2 %}
+    <div
+      class="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg"
+    >
+      Only {{ room.available_units }} left!
+    </div>
+    {% else %}
+    <div
+      class="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg"
+    >
+      {{ room.available_units }} available
+    </div>
+    {% endif %} {% endif %}
+  </div>
+
+  <!-- Room Details -->
+  <div class="p-6">
+    <h3 class="text-2xl font-bold text-gray-800 mb-2">{{ room.name }}</h3>
+
+    <!-- Total Units Info (if multiple units exist) -->
+    {% if room.total_units > 1 %}
+    <div class="flex items-center gap-2 text-gray-500 mb-3 text-sm">
+      <svg
+        class="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+        />
+      </svg>
+      <span>{{ room.total_units }} units of this room type</span>
+    </div>
+    {% endif %}
+
+    <div class="flex items-center gap-2 text-gray-600 mb-4">
+      <svg
+        class="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+        />
+      </svg>
+      <span class="text-sm">{{ room.beds }}</span>
+    </div>
+
+    <div class="flex items-center gap-2 text-gray-600 mb-4">
+      <svg
+        class="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+        />
+      </svg>
+      <span class="text-sm"
+        >{{ room.min_guests }}-{{ room.max_guests }} Guests</span
+      >
+    </div>
+
+    <!-- Amenities Preview (show first 3) -->
+    {% if room.amenities %}
+    <div class="mb-4">
+      <div class="flex flex-wrap gap-2">
+        {% for amenity in room.amenities[:3] %}
+        <span class="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full">
+          {{ amenity.name }}
+        </span>
+        {% endfor %} {% if room.amenities|length > 3 %}
+        <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+          +{{ room.amenities|length - 3 }} more
+        </span>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Availability Status Bar (for selected dates) -->
+    {% if room.available_units is defined and check_in and check_out %}
+    <div class="mb-4 bg-gray-50 rounded-lg p-3">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-sm font-medium text-gray-700"
+          >Availability for selected dates:</span
+        >
+        {% if room.available_units > 2 %}
+        <span class="text-sm font-bold text-green-600">
+          {{ room.available_units }}/{{ room.total_units }} units
+        </span>
+        {% elif room.available_units > 0 %}
+        <span class="text-sm font-bold text-orange-600">
+          {{ room.available_units }}/{{ room.total_units }} units
+        </span>
+        {% else %}
+        <span class="text-sm font-bold text-red-600">
+          {{ room.available_units }}/{{ room.total_units }} units
+        </span>
+        {% endif %}
+      </div>
+      <!-- Progress Bar -->
+      <div class="w-full bg-gray-200 rounded-full h-2">
+        {% set percentage = ((room.available_units / room.total_units) *
+        100)|int %} {% if room.available_units > 2 %}
+        <div
+          class="bg-green-600 h-2 rounded-full transition-all duration-300"
+          style="width: {{ percentage }}%"
+        ></div>
+        {% elif room.available_units > 0 %}
+        <div
+          class="bg-orange-500 h-2 rounded-full transition-all duration-300"
+          style="width: {{ percentage }}%"
+        ></div>
+        {% else %}
+        <div
+          class="bg-red-600 h-2 rounded-full transition-all duration-300"
+          style="width: 0%"
+        ></div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- View Details Button -->
+    {% if room.available_units is defined and room.available_units == 0 %}
+    <button
+      class="w-full bg-gradient-to-r from-gray-400 to-gray-500 text-white py-3 rounded-xl font-semibold opacity-50 cursor-not-allowed"
+      disabled
+    >
+      Fully Booked
+    </button>
+    {% else %}
+    <button
+      hx-get="/room/{{ room.id }}?checkIn={{ check_in or '' }}&checkOut={{ check_out or '' }}&guests={{ guests or 1 }}"
+      hx-target="#roomDetailContainer"
+      hx-swap="innerHTML"
+      onclick="hideSearchView()"
+      class="w-full bg-gradient-to-r from-green-600 to-green-800 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5"
+    >
+      View Details
+    </button>
+    {% endif %}
+  </div>
+</div>
+{% endfor %} {% else %}
+<!-- No Rooms Found -->
+<div class="col-span-full text-center py-16">
+  <div class="max-w-md mx-auto">
+    <div class="mb-6">
+      <svg
+        class="w-24 h-24 mx-auto text-gray-300"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+    </div>
+    <h3 class="text-2xl font-bold text-gray-700 mb-2">No Rooms Available</h3>
+    <p class="text-gray-500 mb-6">
+      We couldn't find any rooms matching your search criteria. Try adjusting
+      your dates or guest count.
+    </p>
+    <button
+      onclick="document.querySelector('form').reset(); htmx.trigger('#roomsGrid', 'load');"
+      class="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors"
+    >
+      Reset Search
+    </button>
+  </div>
+</div>
+{% endif %}

@@ -1,0 +1,365 @@
+{% extends "base.html" %} {% block meta %}
+<title>Villa Rose | Welcome to Paradise in Baras, Catanduanes</title>
+<meta
+  name="description"
+  content="Discover Villa Rose, a peaceful beachfront villa in Barangay San Miguel, Baras, Catanduanes — the ideal destination for relaxation, nature, and island adventure."
+/>
+{% endblock %} {% block content %}
+<style>
+  .main-content-wrapper {
+    position: relative;
+  }
+  #roomDetailContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #10b981 0%, #0abe85 100%);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .calendar-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+
+  .calendar-modal.active {
+    display: flex;
+  }
+
+  .calendar-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .calendar-modal-content {
+    position: relative;
+    z-index: 10;
+    background: white;
+    border-radius: 1rem;
+    padding: 1rem;
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+
+<!-- Main Landing Page Content -->
+<div id="mainContentWrapper" class="main-content-wrapper">
+  <div class="container mx-auto px-4 pb-8">
+    <div class="header-search-container">
+      <div class="max-w-7xl mx-auto" id="headerSearchContent">
+        <!-- Header -->
+        <header class="text-center text-white mb-12" id="mainHeader">
+          <h1 class="text-5xl font-bold mb-3 drop-shadow-lg">VILLA ROSE</h1>
+          <p class="text-xl opacity-90 max-w-2xl mx-auto">
+            Your island escape, elevated to perfection.
+          </p>
+        </header>
+
+        <!-- Search Section -->
+        <section id="searchSection">
+          <form
+            class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 max-w-4xl mx-auto"
+            hx-get="/search"
+            hx-target="#roomsGrid"
+            hx-trigger="submit, change from:#guests"
+            hx-swap="innerHTML"
+            hx-include="[name='checkIn'],[name='checkOut'],[name='guests']"
+          >
+            <div class="flex flex-wrap gap-4">
+              <div class="flex-1 min-w-[200px]">
+                <label
+                  class="block mb-2 font-semibold text-gray-700"
+                  for="checkIn"
+                  >Check-in Date</label
+                >
+                <div class="relative">
+                  <input
+                    type="date"
+                    id="checkIn"
+                    name="checkIn"
+                    value="{{ today }}"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-base"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onclick="openCalendarModal()"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700"
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="flex-1 min-w-[200px]">
+                <label
+                  class="block mb-2 font-semibold text-gray-700"
+                  for="checkOut"
+                  >Check-out Date</label
+                >
+                <input
+                  type="date"
+                  id="checkOut"
+                  name="checkOut"
+                  value="{{ tomorrow }}"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-base"
+                  required
+                />
+              </div>
+              <div class="flex-1 min-w-[200px]">
+                <label
+                  class="block mb-2 font-semibold text-gray-700"
+                  for="guests"
+                  >Guests</label
+                >
+                <select
+                  id="guests"
+                  name="guests"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none text-base"
+                  required
+                >
+                  <option value="1">1 Guest</option>
+                  <option value="2">2 Guests</option>
+                  <option value="3">3 Guests</option>
+                  <option value="4">4 Guests</option>
+                </select>
+              </div>
+              <div class="w-full md:w-auto md:self-end">
+                <button
+                  type="submit"
+                  class="w-full bg-gradient-to-r from-green-600 to-green-800 text-white px-6 py-3 rounded-xl font-semibold hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
+                >
+                  Search Rooms
+                </button>
+              </div>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="text-center mb-8 max-w-7xl mx-auto" id="resultsSection">
+      <h2 class="text-4xl font-bold text-white mb-8 mt-8">Available Rooms</h2>
+      <div
+        id="roomsGrid"
+        hx-get="/search"
+        hx-trigger="load"
+        hx-swap="innerHTML"
+        hx-include="[name='guests']"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      >
+        <!-- Rooms will be loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Room Detail Container - COMPLETELY SEPARATE -->
+<div id="roomDetailContainer" style="display: none"></div>
+
+<!-- Calendar Modal -->
+<!-- <div
+  id="calendarModal"
+  class="calendar-modal"
+  onclick="closeCalendarModalOnBackdrop(event)"
+>
+  <div class="calendar-modal-content" onclick="event.stopPropagation()">
+    <div class="relative">
+      <button
+        onclick="closeCalendarModal()"
+        class="absolute -top-4 -right-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition z-10"
+      >
+        <svg
+          class="w-6 h-6 text-gray-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button> -->
+<!-- <div id="calendarModalContent"> -->
+<!-- Calendar will be loaded here -->
+<!-- </div> -->
+<!-- </div>
+  </div>
+</div> -->
+
+<!-- Calendar Modal -->
+<div id="calendarModal" class="calendar-modal">
+  <div class="calendar-backdrop" onclick="closeCalendarModal()"></div>
+  <div class="calendar-modal-content">
+    <button
+      onclick="closeCalendarModal()"
+      class="absolute -top-4 -right-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition z-10"
+    >
+      <svg
+        class="w-6 h-6 text-gray-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M6 18L18 6M6 6l12 12"
+        />
+      </svg>
+    </button>
+
+    <div id="calendarModalContent">
+      <!-- Calendar will be loaded here -->
+    </div>
+  </div>
+</div>
+
+<script>
+  function hideSearchView() {
+    document.getElementById("mainContentWrapper").style.display = "none";
+    document.getElementById("roomDetailContainer").style.display = "block";
+    window.scrollTo(0, 0);
+  }
+
+  function showSearchView() {
+    document.getElementById("roomDetailContainer").innerHTML = "";
+    document.getElementById("roomDetailContainer").style.display = "none";
+    document.getElementById("mainContentWrapper").style.display = "block";
+    window.scrollTo(0, 0);
+  }
+
+  function getSearchParams() {
+    const checkIn = document.getElementById("checkIn").value;
+    const checkOut = document.getElementById("checkOut").value;
+    const guests = document.getElementById("guests").value;
+    return { checkIn, checkOut, guests };
+  }
+
+  // Calendar Modal Functions
+  function openCalendarModal(roomId = null) {
+    const modal = document.getElementById("calendarModal");
+    const content = document.getElementById("calendarModalContent");
+    const checkIn = document.getElementById("checkIn").value;
+    const checkOut = document.getElementById("checkOut").value;
+    const guests = document.getElementById("guests").value;
+
+    // Use a default room for main search calendar (you can modify this)
+    const targetRoomId = roomId || 1;
+
+    // Load calendar
+    fetch(
+      `/calendar/${targetRoomId}?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`
+    )
+      .then((response) => response.text())
+      .then((html) => {
+        content.innerHTML = html;
+        modal.classList.add("active");
+        document.body.style.overflow = "hidden";
+
+        // ✅ Execute <script> tags from the loaded HTML
+        const scripts = content.querySelectorAll("script");
+        scripts.forEach((script) => {
+          const newScript = document.createElement("script");
+          if (script.src) {
+            // If it's an external script (has src)
+            newScript.src = script.src;
+          } else {
+            // Inline script
+            newScript.text = script.textContent;
+          }
+          document.body.appendChild(newScript);
+          script.remove();
+        });
+      })
+      .catch((error) => console.error("Error loading calendar:", error));
+  }
+
+  function closeCalendarModal() {
+    const modal = document.getElementById("calendarModal");
+    modal.classList.remove("active");
+    document.body.style.overflow = "auto";
+  }
+
+  // function closeCalendarModalOnBackdrop(event) {
+  //   if (event.target.id === "calendarModal") {
+  //     closeCalendarModal();
+  //   }
+  // }
+
+  // Override applyDates function from calendar
+  window.applyDates = function () {
+    if (!window.selectedCheckIn || !window.selectedCheckOut) {
+      alert("Please select both check-in and check-out dates");
+      return;
+    }
+
+    // Update the main form inputs
+    const mainCheckIn = document.getElementById("checkIn");
+    const mainCheckOut = document.getElementById("checkOut");
+
+    if (mainCheckIn) mainCheckIn.value = window.selectedCheckIn;
+    if (mainCheckOut) mainCheckOut.value = window.selectedCheckOut;
+
+    // Close modal
+    closeCalendarModal();
+
+    // Trigger search
+    const form = document.querySelector('form[hx-get="/search"]');
+    if (form) {
+      htmx.trigger(form, "submit");
+    }
+  };
+
+  // Close modal on Escape key
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      closeCalendarModal();
+    }
+  });
+</script>
+{% endblock %}
