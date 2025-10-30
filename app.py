@@ -188,7 +188,7 @@ def get_booked_dates_by_unit(room_id, start_date, end_date):
 
 def append_to_google_sheet(data):
     # Get JSON string from env var
-    creds_json = os.getenv("GOOGLE_CREDS_PATH")
+    creds_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
     if not creds_json:
         print("⚠️ Google Sheets disabled: GOOGLE_SERVICE_ACCOUNT_JSON not set")
         return
