@@ -6,34 +6,39 @@ from dotenv import load_dotenv
 from datetime import datetime, date, timedelta, timezone
 import os
 
+# Load .env only in development
 if os.getenv("FLASK_ENV") == "development":
     load_dotenv()
 
 app = Flask(__name__)
 
-# app.secret_key = os.environ.get("FLASK_SECRET_KEY", "devkey")
-
-# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://localhost/room_booking')
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# Set secret key — required for sessions, flashes, etc.
+# Secret key
 app.secret_key = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY") or "dev-fallback-key-unsafe"
 
 # --- DATABASE ---
 database_url = os.environ.get("DATABASE_URL")
 
+# Debug logging (remove after fixing)
+print(f"🔍 FLASK_ENV: {os.environ.get('FLASK_ENV')}")
+print(f"🔍 DATABASE_URL exists: {database_url is not None}")
+if database_url:
+    # Don't print full URL (has password), just check format
+    print(f"🔍 DATABASE_URL starts with: {database_url.split('@')[0] if '@' in database_url else 'invalid'}")
+
 if not database_url:
     if os.environ.get("FLASK_ENV") == "development":
         database_url = "postgresql://localhost/room_booking"
+        print("⚠️ Using LOCAL database for development")
     else:
         raise RuntimeError("❌ Missing DATABASE_URL — required in production!")
 
 # Fix postgres:// → postgresql://
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
+    print("✅ Fixed postgres:// to postgresql://")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
 db = SQLAlchemy(app)
 
 # Models
