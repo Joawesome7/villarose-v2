@@ -11,6 +11,8 @@ import os
 if os.getenv("FLASK_ENV") == "development":
     load_dotenv()
 
+load_dotenv()
+
 app = Flask(__name__)
 
 # Secret key
@@ -29,13 +31,6 @@ if database_url:
     print(f"🔍 User: {parsed.username}")
     print(f"🔍 Password starts with: {parsed.password[:5] if parsed.password else 'NONE'}...")
     print(f"🔍 Database: {parsed.path[1:]}")
-
-# Debug logging (remove after fixing)
-print(f"🔍 FLASK_ENV: {os.environ.get('FLASK_ENV')}")
-print(f"🔍 DATABASE_URL exists: {database_url is not None}")
-if database_url:
-    # Don't print full URL (has password), just check format
-    print(f"🔍 DATABASE_URL starts with: {database_url.split('@')[0] if '@' in database_url else 'invalid'}")
 
 if not database_url:
     if os.environ.get("FLASK_ENV") == "development":
@@ -67,7 +62,7 @@ class Room(db.Model):
     price = db.Column(db.Integer, nullable=False)
     available = db.Column(db.Boolean, default=True)
     description = db.Column(db.Text)
-    total_units = db.Column(db.Integer, nullable=False, default=1)  # NEW: Total units available
+    total_units = db.Column(db.Integer, nullable=False, default=1)
     
     amenities = db.relationship('Amenity', backref='room', lazy=True, cascade='all, delete-orphan')
     gallery_images = db.relationship('GalleryImage', backref='room', lazy=True, cascade='all, delete-orphan')
@@ -96,16 +91,11 @@ class Booking(db.Model):
     check_in = db.Column(db.Date, nullable=False)
     check_out = db.Column(db.Date, nullable=False)
     guests = db.Column(db.Integer, nullable=False)
+    # NEW: Customer information fields
+    customer_name = db.Column(db.String(200), nullable=False)
+    customer_email = db.Column(db.String(200), nullable=False)
+    customer_contact = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-# I run this to fix production issue in railway
-# with app.app_context():
-#     db.create_all()
-#     if Room.query.count() == 0:
-#         # Add your sample data here (copy from init_db)
-#         # ... (your rooms_data loop)
-#         db.session.commit()
-#         print("✅ Sample data loaded!")
 
 # Helper functions
 def get_available_units(room_id, check_in, check_out):
@@ -162,30 +152,6 @@ def get_booked_dates_by_unit(room_id, start_date, end_date):
     
     return availability
 
-# def append_to_google_sheet(data):
-#     load_dotenv()
-
-#     creds_path = os.getenv("GOOGLE_CREDS_PATH")
-#     sheet_id = os.getenv("GOOGLE_SHEET_ID")
-
-#     # Authenticate using the service account file
-#     creds = Credentials.from_service_account_file(
-#         creds_path,
-#         scopes=["https://www.googleapis.com/auth/spreadsheets"]
-#     )
-
-#     client = gspread.authorize(creds)
-#     sheet = client.open_by_key(sheet_id).sheet1
-
-#     # Append a new row with booking details
-#     sheet.append_row([
-#         data.get("room_id"),
-#         data.get("check_in"),
-#         data.get("guests"),
-#         data.get("check_out"),
-#         data.get("created_at")
-#     ])
-
 def append_to_google_sheet(data):
     # Get JSON string from env var
     creds_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
@@ -209,11 +175,16 @@ def append_to_google_sheet(data):
         client = gspread.authorize(creds)
         sheet = client.open_by_key(sheet_id).sheet1
 
+        # Updated to include customer information
         sheet.append_row([
             data.get("room_id"),
+            data.get("room_name"),
             data.get("check_in"),
-            data.get("guests"),
             data.get("check_out"),
+            data.get("guests"),
+            data.get("customer_name"),
+            data.get("customer_email"),
+            data.get("customer_contact"),
             data.get("created_at")
         ])
         print("✅ Google Sheets updated successfully.")
@@ -322,10 +293,11 @@ def calendar_view(room_id):
                          check_out=check_out, 
                          guests=guests)
 
-@app.route('/booking/confirm', methods=['POST'])
-def confirm_booking():
+# NEW ROUTE: Show customer information form
+@app.route('/booking/customer-form', methods=['POST'])
+def customer_form():
     try:
-        # Get form data
+        # Get booking data from form
         room_id = request.form.get('room_id', type=int)
         check_in_str = request.form.get('check_in')
         check_out_str = request.form.get('check_out')
@@ -333,13 +305,8 @@ def confirm_booking():
 
         # Validate required fields
         if not all([room_id, check_in_str, check_out_str, guests]):
-            missing = []
-            if not room_id: missing.append('room_id')
-            if not check_in_str: missing.append('check_in')
-            if not check_out_str: missing.append('check_out')
-            if not guests: missing.append('guests')
             return render_template('partials/booking_error.html', 
-                                   error=f'Missing required fields: {", ".join(missing)}'), 400
+                                   error='Missing booking information'), 400
 
         # Parse dates
         check_in = datetime.strptime(check_in_str, '%Y-%m-%d').date()
@@ -371,34 +338,127 @@ def confirm_booking():
             return render_template('partials/booking_error.html', 
                                    error=f'No units available for {room.name} on selected dates.'), 400
 
-        # Create booking
+        # Calculate pricing
+        nights = (check_out - check_in).days
+        total_price = room.price * nights
+
+        # Show customer form
+        return render_template('partials/customer_form.html',
+                               room=room,
+                               check_in=check_in_str,
+                               check_out=check_out_str,
+                               guests=guests,
+                               nights=nights,
+                               total_price=total_price)
+
+    except ValueError:
+        return render_template('partials/booking_error.html',
+                               error='Invalid date format'), 400
+    except Exception as e:
+        print(f"❌ Error showing customer form: {e}")
+        import traceback
+        traceback.print_exc()
+        return render_template('partials/booking_error.html',
+                               error='An error occurred'), 500
+
+# UPDATED ROUTE: Confirm booking with customer information
+@app.route('/booking/confirm', methods=['POST'])
+def confirm_booking():
+    try:
+        # Get booking data
+        room_id = request.form.get('room_id', type=int)
+        check_in_str = request.form.get('check_in')
+        check_out_str = request.form.get('check_out')
+        guests = request.form.get('guests', type=int)
+        
+        # Get customer data
+        customer_name = request.form.get('customer_name', '').strip()
+        customer_email = request.form.get('customer_email', '').strip()
+        customer_contact = request.form.get('customer_contact', '').strip()
+
+        # Validate required fields
+        if not all([room_id, check_in_str, check_out_str, guests, customer_name, customer_email, customer_contact]):
+            missing = []
+            if not room_id: missing.append('room_id')
+            if not check_in_str: missing.append('check_in')
+            if not check_out_str: missing.append('check_out')
+            if not guests: missing.append('guests')
+            if not customer_name: missing.append('customer_name')
+            if not customer_email: missing.append('customer_email')
+            if not customer_contact: missing.append('customer_contact')
+            return render_template('partials/booking_error.html', 
+                                   error=f'Missing required fields: {", ".join(missing)}'), 400
+
+        # Validate email format (basic)
+        if '@' not in customer_email or '.' not in customer_email:
+            return render_template('partials/booking_error.html', 
+                                   error='Invalid email format'), 400
+
+        # Parse dates
+        check_in = datetime.strptime(check_in_str, '%Y-%m-%d').date()
+        check_out = datetime.strptime(check_out_str, '%Y-%m-%d').date()
+
+        # Validate dates
+        if check_in >= check_out:
+            return render_template('partials/booking_error.html', 
+                                   error='Check-out date must be after check-in date'), 400
+
+        if check_in < date.today():
+            return render_template('partials/booking_error.html', 
+                                   error='Check-in date cannot be in the past'), 400
+
+        # Get room
+        room = db.session.get(Room, room_id)
+        if not room:
+            return render_template('partials/booking_error.html',
+                                   error='Room not found.'), 404
+
+        # Validate guest count
+        if guests < room.min_guests or guests > room.max_guests:
+            return render_template('partials/booking_error.html', 
+                                   error=f'Guest count must be between {room.min_guests} and {room.max_guests}'), 400
+
+        # Check available units
+        available_units = get_available_units(room_id, check_in, check_out)
+        if available_units <= 0:
+            return render_template('partials/booking_error.html', 
+                                   error=f'No units available for {room.name} on selected dates.'), 400
+
+        # Create booking with customer information
         booking = Booking(
             room_id=room_id,
             check_in=check_in,
             check_out=check_out,
-            guests=guests
+            guests=guests,
+            customer_name=customer_name,
+            customer_email=customer_email,
+            customer_contact=customer_contact
         )
         db.session.add(booking)
         db.session.commit()
 
-        # Try appending to Google Sheets (but don’t break if it fails)
+        # Try appending to Google Sheets (but don't break if it fails)
         try:
             append_to_google_sheet({
                 "room_id": room_id,
+                "room_name": room.name,
                 "check_in": check_in.strftime('%Y-%m-%d'),
                 "check_out": check_out.strftime('%Y-%m-%d'),
                 "guests": guests,
+                "customer_name": customer_name,
+                "customer_email": customer_email,
+                "customer_contact": customer_contact,
                 "created_at": datetime.now(timezone.utc).isoformat()
             })
             print("✅ Google Sheets updated successfully.")
         except Exception as e:
             print(f"⚠️ Google Sheets append failed: {e}")
 
-        # Continue showing confirmation regardless
+        # Calculate pricing
         nights = (check_out - check_in).days
         total_price = room.price * nights
 
-        print(f"✅ Booking created successfully: ID {booking.id}, Room: {room.name}, Units remaining: {available_units - 1}/{room.total_units}")
+        print(f"✅ Booking created successfully: ID {booking.id}, Customer: {customer_name}, Room: {room.name}")
 
         return render_template('partials/booking_confirmation.html',
                                room=room,
@@ -434,7 +494,7 @@ def init_db():
                     'min_guests': 1,
                     'max_guests': 2,
                     'price': 10000,
-                    'total_units': 1,  # 1 unit
+                    'total_units': 1,
                     'description': 'Experience luxury in our spacious Deluxe King Room featuring premium bedding, a 55-inch smart TV, and a private balcony with city views. Perfect for couples seeking comfort and style.',
                     'amenities': ['Service Kitchen / Laundry', 'Parking', 'Sofa Bed', 'Refrigerator', 'AC', 'Balcony', 'Dining Kitchen', 'Water Heater'],
                     'gallery': [
@@ -450,7 +510,7 @@ def init_db():
                     'min_guests': 2,
                     'max_guests': 3,
                     'price': 3500,
-                    'total_units': 2,  # 2 units
+                    'total_units': 2,
                     'description': 'Our Deluxe room offers separate living and sleeping areas, perfect for business travelers or small families. Features include a work desk, premium entertainment system, and access to executive lounge.',
                     'amenities': ['Ocean View / Nature View', 'Shared Toilet Bath Room', '2nd Floor Level With Plated Breakfast'],
                     'gallery': [
@@ -549,145 +609,6 @@ def init_db():
             
             db.session.commit()
             print("✅ Database initialized with sample data!")
-            print("📊 Room units: Deluxe Room (2), Deluxe Room 2 (2), Others (1 each)")
-
-def initialize_sample_data():
-    with app.app_context():
-        db.create_all()
-        if Room.query.count() == 0:
-            print("🌱 Loading sample room data...")
-            # Paste your rooms_data list here (from init_db)
-            rooms_data = [
-                {
-                    'name': 'Bungalow',
-                    'image': 'https://placehold.co/400x300/667eea/white?text=Bungalow',
-                    'beds': '1 Bedroom',
-                    'min_guests': 1,
-                    'max_guests': 2,
-                    'price': 10000,
-                    'total_units': 1,  # 1 unit
-                    'description': 'Experience luxury in our spacious Deluxe King Room featuring premium bedding, a 55-inch smart TV, and a private balcony with city views. Perfect for couples seeking comfort and style.',
-                    'amenities': ['Service Kitchen / Laundry', 'Parking', 'Sofa Bed', 'Refrigerator', 'AC', 'Balcony', 'Dining Kitchen', 'Water Heater'],
-                    'gallery': [
-                        'https://placehold.co/600x400/667eea/white?text=Deluxe+King+View+1',
-                        'https://placehold.co/600x400/764ba2/white?text=Deluxe+King+Bathroom',
-                        'https://placehold.co/600x400/f093fb/white?text=Deluxe+King+Balcony'
-                    ]
-                },
-                {
-                    'name': 'Deluxe Room',
-                    'image': 'https://placehold.co/400x300/764ba2/white?text=Deluxe',
-                    'beds': 'Queen Size Bed /W Pull Out Bed',
-                    'min_guests': 2,
-                    'max_guests': 3,
-                    'price': 3500,
-                    'total_units': 2,  # 2 units
-                    'description': 'Our Deluxe room offers separate living and sleeping areas, perfect for business travelers or small families. Features include a work desk, premium entertainment system, and access to executive lounge.',
-                    'amenities': ['Ocean View / Nature View', 'Shared Toilet Bath Room', '2nd Floor Level With Plated Breakfast'],
-                    'gallery': [
-                        'https://placehold.co/600x400/764ba2/white?text=Executive+Suite+Living',
-                        'https://placehold.co/600x400/4facfe/white?text=Executive+Suite+Bedroom',
-                        'https://placehold.co/600x400/43e97b/white?text=Executive+Suite+Bathroom'
-                    ]
-                },
-                {
-                    'name': 'Suite Room',
-                    'image': 'https://placehold.co/400x300/f093fb/white?text=Suite',
-                    'beds': 'King Size Bed',
-                    'min_guests': 1,
-                    'max_guests': 2,
-                    'price': 4500,
-                    'total_units': 1,  # 1 unit
-                    'description': 'Comfortable and affordable, our Standard Double Room is ideal for families or groups. Features two comfortable double beds, modern amenities, and a cozy atmosphere for a restful stay.',
-                    'amenities': ['Ocean View', 'Pool View', 'Toilet and Bath W/ Bath Thub', '2nd Floor Level With Plated Breakfast'],
-                    'gallery': [
-                        'https://placehold.co/600x400/f093fb/white?text=Standard+Double+Room',
-                        'https://placehold.co/600x400/fbbf24/white?text=Standard+Double+Beds',
-                        'https://placehold.co/600x400/4facfe/white?text=Standard+Double+Bathroom'
-                    ]
-                },
-                {
-                    'name': 'Executive',
-                    'image': 'https://placehold.co/400x300/4facfe/white?text=Executive',
-                    'beds': 'Queen Size Bed W/ Pull Out Bed',
-                    'min_guests': 2,
-                    'max_guests': 3,
-                    'price': 4000,
-                    'total_units': 1,  # 1 unit
-                    'description': 'Wake up to breathtaking ocean views in our Premium Ocean View room. Features a king bed with luxury linens, floor-to-ceiling windows, and a private terrace overlooking the sea.',
-                    'amenities': ['Ocean View', 'Pool View', 'Toilet & Bath', 'Ground Floor Level With Plated Breakfast'],
-                    'gallery': [
-                        'https://placehold.co/600x400/4facfe/white?text=Ocean+View+Room',
-                        'https://placehold.co/600x400/43e97b/white?text=Ocean+View+Terrace',
-                        'https://placehold.co/600x400/fbbf24/white?text=Ocean+View+Bathroom'
-                    ]
-                },
-                {
-                    'name': 'Family Room',
-                    'image': 'https://placehold.co/400x300/43e97b/white?text=Family+Room',
-                    'beds': '2 Bunk Beds',
-                    'min_guests': 2,
-                    'max_guests': 4,
-                    'price': 4000,
-                    'total_units': 1,  # 1 unit
-                    'description': 'Designed for families, our spacious Family Room features two queen beds, ample space for children to play, and family-friendly amenities. Includes access to our kids club and family activities.',
-                    'amenities': ['Shared Toilet & Bath', 'Plated Breakfast'],
-                    'gallery': [
-                        'https://placehold.co/600x400/43e97b/white?text=Family+Room+View',
-                        'https://placehold.co/600x400/fbbf24/white?text=Family+Room+Beds',
-                        'https://placehold.co/600x400/667eea/white?text=Family+Room+Bathroom'
-                    ]
-                },
-                {
-                    'name': 'Deluxe Room 2',
-                    'image': 'https://placehold.co/400x300/fbbf24/white?text=Deluxe+02+Room',
-                    'beds': '1 Queen Bed & Twin Size Bed',
-                    'min_guests': 2,
-                    'max_guests': 3,
-                    'price': 3500,
-                    'total_units': 2,  # 2 units
-                    'description': 'Perfect for business travelers, our Business Studio combines work and relaxation with a comfortable queen bed, ergonomic workspace, high-speed internet, and business center access.',
-                    'amenities': ['Shared Toilet & Bath', 'Plated Breakfast'],
-                    'gallery': [
-                        'https://placehold.co/600x400/fbbf24/white?text=Business+Studio+Room',
-                        'https://placehold.co/600x400/667eea/white?text=Business+Studio+Desk',
-                        'https://placehold.co/600x400/764ba2/white?text=Business+Studio+Bathroom'
-                    ]
-                }
-            ]
-
-            for room_data in rooms_data:
-                room = Room(
-                    name=room_data['name'].strip(),
-                    image=room_data['image'].strip(),
-                    beds=room_data['beds'],
-                    min_guests=room_data['min_guests'],
-                    max_guests=room_data['max_guests'],
-                    price=room_data['price'],
-                    total_units=room_data['total_units'],
-                    description=room_data['description']
-                )
-                db.session.add(room)
-                db.session.flush()
-
-                for amenity in room_data['amenities']:
-                    db.session.add(Amenity(room_id=room.id, name=amenity.strip()))
-
-                for i, img in enumerate(room_data['gallery']):
-                    db.session.add(GalleryImage(
-                        room_id=room.id,
-                        image_url=img.strip(),
-                        order=i
-                    ))
-
-            db.session.commit()
-            print("✅ Sample data loaded!")
-        else:
-            print("✅ Data already exists. Skipping initialization.")
-
-# Run initialization only in production (not local dev)
-if os.environ.get("FLASK_ENV") != "development":
-    initialize_sample_data()
 
 if __name__ == '__main__':
     init_db()

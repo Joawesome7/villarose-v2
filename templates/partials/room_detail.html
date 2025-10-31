@@ -1,5 +1,5 @@
-{% block meta %}
-<title>{{ room.name }} | Villa Rose - San Miguel, Baras, Catanduanes</title>
+
+<!-- <title>{{ room.name }} | Villa Rose - San Miguel, Baras, Catanduanes</title>
 <meta
   name="description"
   content="Stay in our {{ room.name }} — {{ room.description[:150] }}... Book now at Villa Rose in Baranggay San Miguel, Baras, Catanduanes."
@@ -8,13 +8,13 @@
 <meta property="og:title" content="{{ room.name }} | Villa Rose Catanduanes">
 <meta property="og:description" content="{{ room.description[:150] }}...">
 <meta property="og:image" content="{{ room.image }}">
-<meta property="og:type" content="article">
-{% endblock %}
+<meta property="og:type" content="article"> -->
 
-{% block content %}
-<div class="bg-white rounded-3xl shadow-2xl p-10 max-w-6xl mx-auto">
+
+
+<!-- <div class="bg-white rounded-3xl shadow-2xl p-10 max-w-6xl mx-auto"> -->
   <!-- Header -->
-  <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+  <!-- <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
     <h2 class="text-4xl font-bold text-gray-800">{{ room.name }}</h2>
     <button
       onclick="showSearchView()"
@@ -22,10 +22,10 @@
     >
       ← Back to Search
     </button>
-  </div>
+  </div> -->
 
   <!-- Gallery -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+  <!-- <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
     {% for image in room.gallery_images|sort(attribute='order') %}
       {% if loop.first %}
         <img
@@ -41,16 +41,16 @@
         />
       {% endif %}
     {% endfor %}
-  </div>
+  </div> -->
 
   <!-- Description -->
-  <div class="mb-8">
+  <!-- <div class="mb-8">
     <h3 class="text-2xl font-bold mb-3 text-gray-800">About This Room</h3>
     <p class="text-gray-600 text-lg leading-relaxed">{{ room.description }}</p>
-  </div>
+  </div> -->
 
   <!-- Room Details -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+  <!-- <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
     <div class="bg-green-50 p-4 rounded-xl">
       <div class="text-green-600 font-semibold mb-1">Beds</div>
       <div class="text-gray-800 text-lg">{{ room.beds }}</div>
@@ -63,10 +63,10 @@
       <div class="text-green-600 font-semibold mb-1">Price</div>
       <div class="text-gray-800 text-lg">&#8369;{{ "{:,}".format(room.price) }} per night</div>
     </div>
-  </div>
+  </div> -->
 
   <!-- Amenities -->
-  <div class="mb-8">
+  <!-- <div class="mb-8">
     <h3 class="text-2xl font-bold mb-4 text-gray-800">Amenities</h3>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {% for amenity in room.amenities %}
@@ -78,15 +78,15 @@
         </div>
       {% endfor %}
     </div>
-  </div>
+  </div> -->
 
   <!-- Booking Section with Calendar -->
-  <div class="bg-gradient-to-r from-green-50 to-green-100 p-8 rounded-2xl border-2 border-green-200">
+  <!-- <div class="bg-gradient-to-r from-green-50 to-green-100 p-8 rounded-2xl border-2 border-green-200">
     <h3 class="text-2xl font-bold mb-6 text-gray-800 text-center">Book Your Stay</h3>
     
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"> -->
       <!-- Date Selection -->
-      <div class="bg-white p-6 rounded-xl shadow-md">
+      <!-- <div class="bg-white p-6 rounded-xl shadow-md">
         <h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
           <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -130,14 +130,387 @@
                 </option>
               {% endfor %}
             </select>
-          </div>
+          </div> -->
 
           <!-- Calendar Button -->
-          <button
+          <!-- <button
             type="button"
             onclick="openRoomCalendar('{{ room.id }}')"
             class="w-full bg-white border-2 border-green-600 text-green-700 py-3 rounded-xl font-semibold hover:bg-green-50 transition-all duration-200 flex items-center justify-center gap-2"
           >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            View Availability Calendar
+          </button>
+        </div>
+      </div> -->
+
+      <!-- Price Summary -->
+      <!-- <div class="bg-white p-6 rounded-xl shadow-md flex flex-col justify-between">
+        <div>
+          <h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Price Summary
+          </h4> -->
+
+          <!-- <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">Price per night</span>
+              <span class="font-semibold text-gray-800">&#8369;{{ "{:,}".format(room.price) }}</span>
+            </div> -->
+            
+            <!-- <div class="flex justify-between items-center">
+              <span class="text-gray-600">Number of nights</span>
+              <span class="font-semibold text-gray-800" id="nightsDisplay">1</span>
+            </div> -->
+
+            <!-- <div class="border-t-2 border-gray-200 pt-3 mt-3">
+              <div class="flex justify-between items-center">
+                <span class="text-lg font-bold text-gray-800">Total Price</span>
+                <span class="text-2xl font-bold text-green-600" id="totalPriceDisplay">&#8369;{{ "{:,}".format(room.price) }}</span>
+              </div>
+            </div>
+          </div> -->
+
+          <!-- {% if check_in and check_out %}
+            <div class="mt-4 p-3 bg-green-50 rounded-lg">
+              <p class="text-sm text-gray-700">
+                <span class="font-semibold">Selected dates:</span><br>
+                <span id="dateRangeDisplay">{{ check_in }} to {{ check_out }}</span>
+              </p>
+            </div>
+          {% endif %}
+        </div> -->
+
+        <!-- Booking Button -->
+        <!-- <button
+          onclick="confirmBooking()"
+          class="w-full bg-gradient-to-r from-green-600 to-green-800 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200 mt-6"
+        >
+          Confirm Booking
+        </button> -->
+
+        <!-- Additional Info -->
+        <!-- <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <p class="text-xs text-blue-800 text-center flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Free cancellation up to 24 hours before check-in
+          </p>
+        </div> -->
+      <!-- </div> -->
+    <!-- </div> -->
+  <!-- </div> -->
+<!-- </div> -->
+
+<!-- Room-specific Calendar Modal -->
+<!-- <div id="roomCalendarModal" class="calendar-modal" onclick="closeRoomCalendarModal(event)"> -->
+  <!-- <div class="calendar-modal-content" onclick="event.stopPropagation()">
+    <div class="relative">
+      <button 
+        onclick="closeRoomCalendar()" 
+        class="absolute -top-4 -right-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition z-10">
+        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button> -->
+      <!-- <div id="roomCalendarContent"> -->
+        <!-- Calendar will be loaded here -->
+      <!-- </div> -->
+    <!-- </div> -->
+  <!-- </div> -->
+<!-- </div> -->
+
+<!-- <style>
+  .calendar-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+  }
+  
+  .calendar-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  .calendar-modal-content {
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideUp {
+    from { 
+      opacity: 0;
+      transform: translateY(50px);
+    }
+    to { 
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style> -->
+
+<!-- <script>
+  // const roomPrice = "{{ room.price }}";
+
+  // Calculate and update price display
+  // function updatePriceDisplay() {
+  //   const checkIn = document.getElementById('detailCheckIn').value;
+  //   const checkOut = document.getElementById('detailCheckOut').value;
+    
+  //   if (checkIn && checkOut) {
+  //     const checkInDate = new Date(checkIn);
+  //     const checkOutDate = new Date(checkOut);
+  //     const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+      
+  //     if (nights > 0) {
+  //       const totalPrice = roomPrice * nights;
+  //       document.getElementById('nightsDisplay').textContent = nights;
+  //       document.getElementById('totalPriceDisplay').textContent = '₱' + totalPrice.toLocaleString();
+  //       document.getElementById('dateRangeDisplay').textContent = checkIn + ' to ' + checkOut;
+  //     }
+  //   }
+  // }
+
+  // Add event listeners for date changes
+  // document.getElementById('detailCheckIn').addEventListener('change', updatePriceDisplay);
+  // document.getElementById('detailCheckOut').addEventListener('change', updatePriceDisplay);
+
+  // Initialize on load
+  // updatePriceDisplay();
+
+  // function openRoomCalendar(roomId) {
+  //   const modal = document.getElementById('roomCalendarModal');
+  //   const content = document.getElementById('roomCalendarContent');
+  //   const checkIn = document.getElementById('detailCheckIn').value;
+  //   const checkOut = document.getElementById('detailCheckOut').value;
+  //   const guests = document.getElementById('detailGuests').value;
+    
+  //   fetch(`/calendar/${roomId}?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`)
+  //     .then(response => response.text())
+  //     .then(html => {
+  //       content.innerHTML = html;
+  //       modal.classList.add('active');
+  //       document.body.style.overflow = 'hidden';
+  //     })
+  //     .catch(error => console.error('Error loading calendar:', error));
+  // }
+
+  // function closeRoomCalendar() {
+  //   const modal = document.getElementById('roomCalendarModal');
+  //   modal.classList.remove('active');
+  //   document.body.style.overflow = 'auto';
+  // }
+
+  // function closeRoomCalendarModal(event) {
+  //   if (event.target.id === 'roomCalendarModal') {
+  //     closeRoomCalendar();
+  //   }
+  // }
+
+  // Override applyDates for room detail page
+  window.applyDates = function() {
+    if (!window.selectedCheckIn || !window.selectedCheckOut) {
+      alert('Please select both check-in and check-out dates');
+      return;
+    }
+    
+    // Update the room detail form inputs
+    const detailCheckIn = document.getElementById('detailCheckIn');
+    const detailCheckOut = document.getElementById('detailCheckOut');
+    
+    if (detailCheckIn) detailCheckIn.value = window.selectedCheckIn;
+    if (detailCheckOut) detailCheckOut.value = window.selectedCheckOut;
+    
+    // Update price display
+    updatePriceDisplay();
+    
+    // Close modal
+    closeRoomCalendar();
+  };
+
+  function confirmBooking() {
+    const checkIn = document.getElementById('detailCheckIn').value;
+    const checkOut = document.getElementById('detailCheckOut').value;
+    const guests = document.getElementById('detailGuests').value;
+    const roomId = "{{ room.id }}";
+
+    // Validation
+    if (!checkIn || !checkOut) {
+      alert('Please select check-in and check-out dates');
+      return;
+    }
+
+    if (!guests) {
+      alert('Please select number of guests');
+      return;
+    }
+
+    // Validate dates
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    
+    if (checkOutDate <= checkInDate) {
+      alert('Check-out date must be after check-in date');
+      return;
+    }
+
+    if (checkInDate < new Date().setHours(0, 0, 0, 0)) {
+      alert('Check-in date cannot be in the past');
+      return;
+    }
+
+    // Log for debugging
+    console.log('Booking data:', {
+      room_id: roomId,
+      check_in: checkIn,
+      check_out: checkOut,
+      guests: guests
+    });
+
+    // Use HTMX to submit booking
+    htmx.ajax('POST', '/booking/confirm', {
+      target: '#roomDetailContainer',
+      swap: 'innerHTML',
+      values: {
+        room_id: roomId,
+        check_in: checkIn,
+        check_out: checkOut,
+        guests: guests
+      }
+    });
+  }
+
+  // Close modal on Escape key
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      closeRoomCalendar();
+    }
+  });
+</script> -->
+
+{% block meta %}
+<title>{{ room.name }} | Villa Rose - San Miguel, Baras, Catanduanes</title>
+<meta name="description" content="Stay in our {{ room.name }} — {{ room.description[:150] }}... Book now at Villa Rose in Baranggay San Miguel, Baras, Catanduanes.">
+<meta name="keywords" content="Villa Rose {{ room.name }}, Villa Rose Baras, Catanduanes resort, beachfront villa, {{ room.name }} room, island stay Catanduanes">
+<meta property="og:title" content="{{ room.name }} | Villa Rose Catanduanes">
+<meta property="og:description" content="{{ room.description[:150] }}...">
+<meta property="og:image" content="{{ room.image }}">
+<meta property="og:type" content="article">
+{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-3xl shadow-2xl p-10 max-w-6xl mx-auto">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+    <h2 class="text-4xl font-bold text-gray-800">{{ room.name }}</h2>
+    <button onclick="showSearchView()" class="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors">
+      ← Back to Search
+    </button>
+  </div>
+
+  <!-- Gallery -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    {% for image in room.gallery_images|sort(attribute='order') %}
+      {% if loop.first %}
+        <img src="{{ image.image_url }}" alt="{{ room.name }}" class="w-full h-96 md:col-span-2 object-cover rounded-2xl shadow-lg"/>
+      {% else %}
+        <img src="{{ image.image_url }}" alt="{{ room.name }}" class="w-full h-48 object-cover rounded-2xl shadow-lg"/>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <!-- Description -->
+  <div class="mb-8">
+    <h3 class="text-2xl font-bold mb-3 text-gray-800">About This Room</h3>
+    <p class="text-gray-600 text-lg leading-relaxed">{{ room.description }}</p>
+  </div>
+
+  <!-- Room Details -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="bg-green-50 p-4 rounded-xl">
+      <div class="text-green-600 font-semibold mb-1">Beds</div>
+      <div class="text-gray-800 text-lg">{{ room.beds }}</div>
+    </div>
+    <div class="bg-green-50 p-4 rounded-xl">
+      <div class="text-green-600 font-semibold mb-1">Capacity</div>
+      <div class="text-gray-800 text-lg">{{ room.min_guests }}-{{ room.max_guests }} Guests</div>
+    </div>
+    <div class="bg-green-50 p-4 rounded-xl">
+      <div class="text-green-600 font-semibold mb-1">Price</div>
+      <div class="text-gray-800 text-lg">&#8369;{{ "{:,}".format(room.price) }} per night</div>
+    </div>
+  </div>
+
+  <!-- Amenities -->
+  <div class="mb-8">
+    <h3 class="text-2xl font-bold mb-4 text-gray-800">Amenities</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for amenity in room.amenities %}
+        <div class="flex items-center gap-3 bg-gray-50 p-4 rounded-xl hover:bg-gray-100 transition-colors">
+          <div class="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">✓</div>
+          <span class="text-gray-700">{{ amenity.name }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Booking Section with Calendar -->
+  <div class="bg-gradient-to-r from-green-50 to-green-100 p-8 rounded-2xl border-2 border-green-200">
+    <h3 class="text-2xl font-bold mb-6 text-gray-800 text-center">Book Your Stay</h3>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <!-- Date Selection -->
+      <div class="bg-white p-6 rounded-xl shadow-md">
+        <h4 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          Select Dates
+        </h4>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Check-in Date</label>
+            <input type="date" id="detailCheckIn" value="{{ check_in }}" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none" required/>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Check-out Date</label>
+            <input type="date" id="detailCheckOut" value="{{ check_out }}" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none" required/>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Number of Guests</label>
+            <select id="detailGuests" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-600 focus:outline-none" required>
+              {% for i in range(room.min_guests, room.max_guests + 1) %}
+                <option value="{{ i }}" {% if i == guests|int %}selected{% endif %}>{{ i }} Guest{% if i > 1 %}s{% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Calendar Button -->
+          <button type="button" onclick="openRoomCalendar('{{ room.id }}')" class="w-full bg-white border-2 border-green-600 text-green-700 py-3 rounded-xl font-semibold hover:bg-green-50 transition-all duration-200 flex items-center justify-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
@@ -185,12 +558,9 @@
           {% endif %}
         </div>
 
-        <!-- Booking Button -->
-        <button
-          onclick="confirmBooking()"
-          class="w-full bg-gradient-to-r from-green-600 to-green-800 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200 mt-6"
-        >
-          Confirm Booking
+        <!-- UPDATED: Booking Button now goes to customer form -->
+        <button onclick="proceedToCustomerForm()" class="w-full bg-gradient-to-r from-green-600 to-green-800 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200 mt-6">
+          Continue to Booking
         </button>
 
         <!-- Additional Info -->
@@ -211,9 +581,7 @@
 <div id="roomCalendarModal" class="calendar-modal" onclick="closeRoomCalendarModal(event)">
   <div class="calendar-modal-content" onclick="event.stopPropagation()">
     <div class="relative">
-      <button 
-        onclick="closeRoomCalendar()" 
-        class="absolute -top-4 -right-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition z-10">
+      <button onclick="closeRoomCalendar()" class="absolute -top-4 -right-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition z-10">
         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
@@ -335,21 +703,18 @@
       return;
     }
     
-    // Update the room detail form inputs
     const detailCheckIn = document.getElementById('detailCheckIn');
     const detailCheckOut = document.getElementById('detailCheckOut');
     
     if (detailCheckIn) detailCheckIn.value = window.selectedCheckIn;
     if (detailCheckOut) detailCheckOut.value = window.selectedCheckOut;
     
-    // Update price display
     updatePriceDisplay();
-    
-    // Close modal
     closeRoomCalendar();
   };
 
-  function confirmBooking() {
+  // NEW FUNCTION: Proceed to customer form instead of direct booking
+  function proceedToCustomerForm() {
     const checkIn = document.getElementById('detailCheckIn').value;
     const checkOut = document.getElementById('detailCheckOut').value;
     const guests = document.getElementById('detailGuests').value;
@@ -380,16 +745,8 @@
       return;
     }
 
-    // Log for debugging
-    console.log('Booking data:', {
-      room_id: roomId,
-      check_in: checkIn,
-      check_out: checkOut,
-      guests: guests
-    });
-
-    // Use HTMX to submit booking
-    htmx.ajax('POST', '/booking/confirm', {
+    // Use HTMX to load customer form
+    htmx.ajax('POST', '/booking/customer-form', {
       target: '#roomDetailContainer',
       swap: 'innerHTML',
       values: {
