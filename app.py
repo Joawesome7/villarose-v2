@@ -7,42 +7,26 @@ from dotenv import load_dotenv
 from datetime import datetime, date, timedelta, timezone
 import os
 
-# Load .env only in development
-if os.getenv("FLASK_ENV") == "development":
-    load_dotenv()
-
+# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 
-# Secret key
-app.secret_key = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY") or "dev-fallback-key-unsafe"
+# Configuration
+app.secret_key = os.environ.get("SECRET_KEY", "dev-fallback-key-unsafe")
 
-# --- DATABASE ---
+# Database setup
 database_url = os.environ.get("DATABASE_URL")
-# Debug - print what we're actually getting
-print(f"🔍 DATABASE_URL exists: {database_url is not None}")
-if database_url:
-    # Parse to show components without exposing full password
-    from urllib.parse import urlparse
-    parsed = urlparse(database_url)
-    print(f"🔍 Host: {parsed.hostname}")
-    print(f"🔍 Port: {parsed.port}")
-    print(f"🔍 User: {parsed.username}")
-    print(f"🔍 Password starts with: {parsed.password[:5] if parsed.password else 'NONE'}...")
-    print(f"🔍 Database: {parsed.path[1:]}")
 
 if not database_url:
     if os.environ.get("FLASK_ENV") == "development":
         database_url = "postgresql://localhost/room_booking"
-        print("⚠️ Using LOCAL database for development")
     else:
-        raise RuntimeError("❌ Missing DATABASE_URL — required in production!")
+        raise RuntimeError("Missing DATABASE_URL in production")
 
-# Fix postgres:// → postgresql://
+# Fix postgres:// to postgresql://
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
-    print("✅ Fixed postgres:// to postgresql://")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -68,12 +52,14 @@ class Room(db.Model):
     gallery_images = db.relationship('GalleryImage', backref='room', lazy=True, cascade='all, delete-orphan')
     bookings = db.relationship('Booking', backref='room', lazy=True)
 
+
 class Amenity(db.Model):
     __tablename__ = 'amenities'
     
     id = db.Column(db.Integer, primary_key=True)
     room_id = db.Column(db.Integer, db.ForeignKey('rooms.id'), nullable=False)
     name = db.Column(db.String(100), nullable=False)
+
 
 class GalleryImage(db.Model):
     __tablename__ = 'gallery_images'
@@ -83,6 +69,7 @@ class GalleryImage(db.Model):
     image_url = db.Column(db.String(500), nullable=False)
     order = db.Column(db.Integer, default=0)
 
+
 class Booking(db.Model):
     __tablename__ = 'bookings'
     
@@ -91,11 +78,11 @@ class Booking(db.Model):
     check_in = db.Column(db.Date, nullable=False)
     check_out = db.Column(db.Date, nullable=False)
     guests = db.Column(db.Integer, nullable=False)
-    # NEW: Customer information fields
     customer_name = db.Column(db.String(200), nullable=False)
     customer_email = db.Column(db.String(200), nullable=False)
     customer_contact = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 
 # Helper functions
 def get_available_units(room_id, check_in, check_out):
@@ -104,19 +91,14 @@ def get_available_units(room_id, check_in, check_out):
     if not room:
         return 0
     
-    # Count how many bookings overlap with this date range
     overlapping_bookings = Booking.query.filter(
         Booking.room_id == room_id,
         Booking.check_out > check_in,
         Booking.check_in < check_out
     ).count()
     
-    available = room.total_units - overlapping_bookings
-    return max(0, available)
+    return max(0, room.total_units - overlapping_bookings)
 
-def is_room_available(room_id, check_in, check_out):
-    """Check if at least one unit is available for booking"""
-    return get_available_units(room_id, check_in, check_out) > 0
 
 def get_booked_dates_by_unit(room_id, start_date, end_date):
     """Get availability info per date for calendar display"""
@@ -152,30 +134,25 @@ def get_booked_dates_by_unit(room_id, start_date, end_date):
     
     return availability
 
+
 def append_to_google_sheet(data):
-    # Get JSON string from env var
+    """Append booking data to Google Sheets (optional)"""
     creds_json = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
-    if not creds_json:
-        print("⚠️ Google Sheets disabled: GOOGLE_SERVICE_ACCOUNT_JSON not set")
-        return
-
     sheet_id = os.getenv("GOOGLE_SHEET_ID")
-    if not sheet_id:
-        print("⚠️ Google Sheets disabled: GOOGLE_SHEET_ID not set")
+    
+    if not creds_json or not sheet_id:
         return
-
+    
     try:
-        # Parse JSON and create credentials
         creds_dict = json.loads(creds_json)
         creds = Credentials.from_service_account_info(
             creds_dict,
             scopes=["https://www.googleapis.com/auth/spreadsheets"]
         )
-
+        
         client = gspread.authorize(creds)
         sheet = client.open_by_key(sheet_id).sheet1
-
-        # Updated to include customer information
+        
         sheet.append_row([
             data.get("room_id"),
             data.get("room_name"),
@@ -187,16 +164,19 @@ def append_to_google_sheet(data):
             data.get("customer_contact"),
             data.get("created_at")
         ])
-        print("✅ Google Sheets updated successfully.")
     except Exception as e:
-        print(f"⚠️ Google Sheets append failed: {e}")
+        print(f"Google Sheets error: {e}")
+
 
 # Routes
 @app.route('/')
 def index():
     today = date.today()
     tomorrow = today + timedelta(days=1)
-    return render_template('index.html', today=today.strftime('%Y-%m-%d'), tomorrow=tomorrow.strftime('%Y-%m-%d'))
+    return render_template('index.html', 
+                         today=today.strftime('%Y-%m-%d'), 
+                         tomorrow=tomorrow.strftime('%Y-%m-%d'))
+
 
 @app.route('/search')
 def search_rooms():
@@ -206,7 +186,6 @@ def search_rooms():
     
     query = Room.query.filter_by(available=True)
     
-    # Filter by guest count if provided
     if guests:
         query = query.filter(Room.min_guests <= guests, Room.max_guests >= guests)
     
@@ -218,7 +197,6 @@ def search_rooms():
             check_in = datetime.strptime(check_in_str, '%Y-%m-%d').date()
             check_out = datetime.strptime(check_out_str, '%Y-%m-%d').date()
             
-            # Add available units info to each room
             available_rooms = []
             for room in rooms:
                 available_units = get_available_units(room.id, check_in, check_out)
@@ -227,15 +205,18 @@ def search_rooms():
                     available_rooms.append(room)
             rooms = available_rooms
         except ValueError:
-            # If date parsing fails, show all rooms with full unit count
             for room in rooms:
                 room.available_units = room.total_units
     else:
-        # No dates specified, show all rooms with full unit count
         for room in rooms:
             room.available_units = room.total_units
     
-    return render_template('partials/rooms_grid.html', rooms=rooms, guests=guests, check_in=check_in_str, check_out=check_out_str)
+    return render_template('partials/rooms_grid.html', 
+                         rooms=rooms, 
+                         guests=guests, 
+                         check_in=check_in_str, 
+                         check_out=check_out_str)
+
 
 @app.route('/room/<int:room_id>')
 def room_detail(room_id):
@@ -244,7 +225,6 @@ def room_detail(room_id):
     check_out_str = request.args.get('checkOut', (date.today() + timedelta(days=1)).strftime('%Y-%m-%d'))
     guests = request.args.get('guests', 1)
     
-    # Calculate available units for this date range
     try:
         check_in = datetime.strptime(check_in_str, '%Y-%m-%d').date()
         check_out = datetime.strptime(check_out_str, '%Y-%m-%d').date()
@@ -252,7 +232,12 @@ def room_detail(room_id):
     except ValueError:
         room.available_units = room.total_units
     
-    return render_template('partials/room_detail.html', room=room, check_in=check_in_str, check_out=check_out_str, guests=guests)
+    return render_template('partials/room_detail.html', 
+                         room=room, 
+                         check_in=check_in_str, 
+                         check_out=check_out_str, 
+                         guests=guests)
+
 
 @app.route('/api/room/<int:room_id>/availability')
 def room_availability(room_id):
@@ -279,6 +264,7 @@ def room_availability(room_id):
         'end_date': end_date.strftime('%Y-%m-%d')
     })
 
+
 @app.route('/calendar/<int:room_id>')
 def calendar_view(room_id):
     """Render the calendar component"""
@@ -293,138 +279,108 @@ def calendar_view(room_id):
                          check_out=check_out, 
                          guests=guests)
 
-# NEW ROUTE: Show customer information form
+
 @app.route('/booking/customer-form', methods=['POST'])
 def customer_form():
     try:
-        # Get booking data from form
         room_id = request.form.get('room_id', type=int)
         check_in_str = request.form.get('check_in')
         check_out_str = request.form.get('check_out')
         guests = request.form.get('guests', type=int)
 
-        # Validate required fields
         if not all([room_id, check_in_str, check_out_str, guests]):
             return render_template('partials/booking_error.html', 
-                                   error='Missing booking information'), 400
+                                 error='Missing booking information'), 400
 
-        # Parse dates
         check_in = datetime.strptime(check_in_str, '%Y-%m-%d').date()
         check_out = datetime.strptime(check_out_str, '%Y-%m-%d').date()
 
-        # Validate dates
         if check_in >= check_out:
             return render_template('partials/booking_error.html', 
-                                   error='Check-out date must be after check-in date'), 400
+                                 error='Check-out date must be after check-in date'), 400
 
         if check_in < date.today():
             return render_template('partials/booking_error.html', 
-                                   error='Check-in date cannot be in the past'), 400
+                                 error='Check-in date cannot be in the past'), 400
 
-        # Get room
         room = db.session.get(Room, room_id)
         if not room:
             return render_template('partials/booking_error.html',
-                                   error='Room not found.'), 404
+                                 error='Room not found'), 404
 
-        # Validate guest count
         if guests < room.min_guests or guests > room.max_guests:
             return render_template('partials/booking_error.html', 
-                                   error=f'Guest count must be between {room.min_guests} and {room.max_guests}'), 400
+                                 error=f'Guest count must be between {room.min_guests} and {room.max_guests}'), 400
 
-        # Check available units
         available_units = get_available_units(room_id, check_in, check_out)
         if available_units <= 0:
             return render_template('partials/booking_error.html', 
-                                   error=f'No units available for {room.name} on selected dates.'), 400
+                                 error=f'No units available for {room.name} on selected dates'), 400
 
-        # Calculate pricing
         nights = (check_out - check_in).days
         total_price = room.price * nights
 
-        # Show customer form
         return render_template('partials/customer_form.html',
-                               room=room,
-                               check_in=check_in_str,
-                               check_out=check_out_str,
-                               guests=guests,
-                               nights=nights,
-                               total_price=total_price)
+                             room=room,
+                             check_in=check_in_str,
+                             check_out=check_out_str,
+                             guests=guests,
+                             nights=nights,
+                             total_price=total_price)
 
     except ValueError:
         return render_template('partials/booking_error.html',
-                               error='Invalid date format'), 400
+                             error='Invalid date format'), 400
     except Exception as e:
-        print(f"❌ Error showing customer form: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"Error showing customer form: {e}")
         return render_template('partials/booking_error.html',
-                               error='An error occurred'), 500
+                             error='An error occurred'), 500
 
-# UPDATED ROUTE: Confirm booking with customer information
+
 @app.route('/booking/confirm', methods=['POST'])
 def confirm_booking():
     try:
-        # Get booking data
         room_id = request.form.get('room_id', type=int)
         check_in_str = request.form.get('check_in')
         check_out_str = request.form.get('check_out')
         guests = request.form.get('guests', type=int)
-        
-        # Get customer data
         customer_name = request.form.get('customer_name', '').strip()
         customer_email = request.form.get('customer_email', '').strip()
         customer_contact = request.form.get('customer_contact', '').strip()
 
-        # Validate required fields
         if not all([room_id, check_in_str, check_out_str, guests, customer_name, customer_email, customer_contact]):
-            missing = []
-            if not room_id: missing.append('room_id')
-            if not check_in_str: missing.append('check_in')
-            if not check_out_str: missing.append('check_out')
-            if not guests: missing.append('guests')
-            if not customer_name: missing.append('customer_name')
-            if not customer_email: missing.append('customer_email')
-            if not customer_contact: missing.append('customer_contact')
             return render_template('partials/booking_error.html', 
-                                   error=f'Missing required fields: {", ".join(missing)}'), 400
+                                 error='All fields are required'), 400
 
-        # Validate email format (basic)
         if '@' not in customer_email or '.' not in customer_email:
             return render_template('partials/booking_error.html', 
-                                   error='Invalid email format'), 400
+                                 error='Invalid email format'), 400
 
-        # Parse dates
         check_in = datetime.strptime(check_in_str, '%Y-%m-%d').date()
         check_out = datetime.strptime(check_out_str, '%Y-%m-%d').date()
 
-        # Validate dates
         if check_in >= check_out:
             return render_template('partials/booking_error.html', 
-                                   error='Check-out date must be after check-in date'), 400
+                                 error='Check-out date must be after check-in date'), 400
 
         if check_in < date.today():
             return render_template('partials/booking_error.html', 
-                                   error='Check-in date cannot be in the past'), 400
+                                 error='Check-in date cannot be in the past'), 400
 
-        # Get room
         room = db.session.get(Room, room_id)
         if not room:
             return render_template('partials/booking_error.html',
-                                   error='Room not found.'), 404
+                                 error='Room not found'), 404
 
-        # Validate guest count
         if guests < room.min_guests or guests > room.max_guests:
             return render_template('partials/booking_error.html', 
-                                   error=f'Guest count must be between {room.min_guests} and {room.max_guests}'), 400
+                                 error=f'Guest count must be between {room.min_guests} and {room.max_guests}'), 400
 
-        # Check available units
         available_units = get_available_units(room_id, check_in, check_out)
         if available_units <= 0:
             return render_template('partials/booking_error.html', 
-                                   error=f'No units available for {room.name} on selected dates.'), 400
+                                 error=f'No units available for {room.name} on selected dates'), 400
 
-        # Create booking with customer information
         booking = Booking(
             room_id=room_id,
             check_in=check_in,
@@ -437,7 +393,7 @@ def confirm_booking():
         db.session.add(booking)
         db.session.commit()
 
-        # Try appending to Google Sheets (but don't break if it fails)
+        # Try appending to Google Sheets (non-critical)
         try:
             append_to_google_sheet({
                 "room_id": room_id,
@@ -450,42 +406,34 @@ def confirm_booking():
                 "customer_contact": customer_contact,
                 "created_at": datetime.now(timezone.utc).isoformat()
             })
-            print("✅ Google Sheets updated successfully.")
         except Exception as e:
-            print(f"⚠️ Google Sheets append failed: {e}")
+            print(f"Google Sheets error: {e}")
 
-        # Calculate pricing
         nights = (check_out - check_in).days
         total_price = room.price * nights
 
-        print(f"✅ Booking created successfully: ID {booking.id}, Customer: {customer_name}, Room: {room.name}")
-
         return render_template('partials/booking_confirmation.html',
-                               room=room,
-                               booking=booking,
-                               total_price=total_price,
-                               nights=nights,
-                               remaining_units=available_units - 1)
+                             room=room,
+                             booking=booking,
+                             total_price=total_price,
+                             nights=nights,
+                             remaining_units=available_units - 1)
 
     except ValueError:
         return render_template('partials/booking_error.html',
-                               error='Invalid date format'), 400
+                             error='Invalid date format'), 400
     except Exception as e:
-        print(f"❌ Booking error: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"Booking error: {e}")
         return render_template('partials/booking_error.html',
-                               error='An error occurred while processing your booking'), 500
+                             error='An error occurred while processing your booking'), 500
 
 
-# Initialize database
 def init_db():
+    """Initialize database with sample data"""
     with app.app_context():
         db.create_all()
         
-        # Check if data already exists
         if Room.query.count() == 0:
-            # Sample data with unit counts
             rooms_data = [
                 {
                     'name': 'Bungalow',
@@ -495,7 +443,7 @@ def init_db():
                     'max_guests': 2,
                     'price': 10000,
                     'total_units': 1,
-                    'description': 'Experience luxury in our spacious Deluxe King Room featuring premium bedding, a 55-inch smart TV, and a private balcony with city views. Perfect for couples seeking comfort and style.',
+                    'description': 'Experience luxury in our spacious Deluxe King Room featuring premium bedding, a 55-inch smart TV, and a private balcony with city views.',
                     'amenities': ['Service Kitchen / Laundry', 'Parking', 'Sofa Bed', 'Refrigerator', 'AC', 'Balcony', 'Dining Kitchen', 'Water Heater'],
                     'gallery': [
                         'https://placehold.co/600x400/667eea/white?text=Deluxe+King+View+1',
@@ -511,7 +459,7 @@ def init_db():
                     'max_guests': 3,
                     'price': 3500,
                     'total_units': 2,
-                    'description': 'Our Deluxe room offers separate living and sleeping areas, perfect for business travelers or small families. Features include a work desk, premium entertainment system, and access to executive lounge.',
+                    'description': 'Our Deluxe room offers separate living and sleeping areas, perfect for business travelers or small families.',
                     'amenities': ['Ocean View / Nature View', 'Shared Toilet Bath Room', '2nd Floor Level With Plated Breakfast'],
                     'gallery': [
                         'https://placehold.co/600x400/764ba2/white?text=Executive+Suite+Living',
@@ -526,8 +474,8 @@ def init_db():
                     'min_guests': 1,
                     'max_guests': 2,
                     'price': 4500,
-                    'total_units': 1,  # 1 unit
-                    'description': 'Comfortable and affordable, our Standard Double Room is ideal for families or groups. Features two comfortable double beds, modern amenities, and a cozy atmosphere for a restful stay.',
+                    'total_units': 1,
+                    'description': 'Comfortable and affordable, our Standard Double Room is ideal for families or groups.',
                     'amenities': ['Ocean View', 'Pool View', 'Toilet and Bath W/ Bath Thub', '2nd Floor Level With Plated Breakfast'],
                     'gallery': [
                         'https://placehold.co/600x400/f093fb/white?text=Standard+Double+Room',
@@ -542,8 +490,8 @@ def init_db():
                     'min_guests': 2,
                     'max_guests': 3,
                     'price': 4000,
-                    'total_units': 1,  # 1 unit
-                    'description': 'Wake up to breathtaking ocean views in our Premium Ocean View room. Features a king bed with luxury linens, floor-to-ceiling windows, and a private terrace overlooking the sea.',
+                    'total_units': 1,
+                    'description': 'Wake up to breathtaking ocean views in our Premium Ocean View room.',
                     'amenities': ['Ocean View', 'Pool View', 'Toilet & Bath', 'Ground Floor Level With Plated Breakfast'],
                     'gallery': [
                         'https://placehold.co/600x400/4facfe/white?text=Ocean+View+Room',
@@ -558,8 +506,8 @@ def init_db():
                     'min_guests': 2,
                     'max_guests': 4,
                     'price': 4000,
-                    'total_units': 1,  # 1 unit
-                    'description': 'Designed for families, our spacious Family Room features two queen beds, ample space for children to play, and family-friendly amenities. Includes access to our kids club and family activities.',
+                    'total_units': 1,
+                    'description': 'Designed for families, our spacious Family Room features two queen beds and ample space for children.',
                     'amenities': ['Shared Toilet & Bath', 'Plated Breakfast'],
                     'gallery': [
                         'https://placehold.co/600x400/43e97b/white?text=Family+Room+View',
@@ -574,8 +522,8 @@ def init_db():
                     'min_guests': 2,
                     'max_guests': 3,
                     'price': 3500,
-                    'total_units': 2,  # 2 units
-                    'description': 'Perfect for business travelers, our Business Studio combines work and relaxation with a comfortable queen bed, ergonomic workspace, high-speed internet, and business center access.',
+                    'total_units': 2,
+                    'description': 'Perfect for business travelers, our Business Studio combines work and relaxation.',
                     'amenities': ['Shared Toilet & Bath', 'Plated Breakfast'],
                     'gallery': [
                         'https://placehold.co/600x400/fbbf24/white?text=Business+Studio+Room',
@@ -608,7 +556,8 @@ def init_db():
                     db.session.add(gallery_img)
             
             db.session.commit()
-            print("✅ Database initialized with sample data!")
+            print("Database initialized with sample data")
+
 
 if __name__ == '__main__':
     init_db()
