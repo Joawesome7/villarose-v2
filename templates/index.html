@@ -198,39 +198,6 @@
 <div id="roomDetailContainer" style="display: none"></div>
 
 <!-- Calendar Modal -->
-<!-- <div
-  id="calendarModal"
-  class="calendar-modal"
-  onclick="closeCalendarModalOnBackdrop(event)"
->
-  <div class="calendar-modal-content" onclick="event.stopPropagation()">
-    <div class="relative">
-      <button
-        onclick="closeCalendarModal()"
-        class="absolute -top-4 -right-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition z-10"
-      >
-        <svg
-          class="w-6 h-6 text-gray-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button> -->
-<!-- <div id="calendarModalContent"> -->
-<!-- Calendar will be loaded here -->
-<!-- </div> -->
-<!-- </div>
-  </div>
-</div> -->
-
-<!-- Calendar Modal -->
 <div id="calendarModal" class="calendar-modal">
   <div class="calendar-backdrop" onclick="closeCalendarModal()"></div>
   <div class="calendar-modal-content">
@@ -324,12 +291,6 @@
     modal.classList.remove("active");
     document.body.style.overflow = "auto";
   }
-
-  // function closeCalendarModalOnBackdrop(event) {
-  //   if (event.target.id === "calendarModal") {
-  //     closeCalendarModal();
-  //   }
-  // }
 
   // Override applyDates function from calendar
   window.applyDates = function () {

@@ -141,12 +141,12 @@
         100)|int %} {% if room.available_units > 2 %}
         <div
           class="bg-green-600 h-2 rounded-full transition-all duration-300"
-          style="width: {{ percentage }}%"
+          style="width: '{{ percentage }}%'"
         ></div>
         {% elif room.available_units > 0 %}
         <div
           class="bg-orange-500 h-2 rounded-full transition-all duration-300"
-          style="width: {{ percentage }}%"
+          style="width: '{{ percentage }}%'"
         ></div>
         {% else %}
         <div
