@@ -435,8 +435,9 @@ def webhook():
         token_sent = request.args.get("hub.verify_token")
         challenge = request.args.get("hub.challenge")
         if token_sent == VERIFY_TOKEN:
-            return challenge  # ✅ Fixed!
+            return challenge
         return "Invalid verification token", 403
+        
     elif request.method == "POST":
         # Handle incoming webhook data
         try:
