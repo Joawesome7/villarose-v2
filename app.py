@@ -428,25 +428,26 @@ def confirm_booking():
         return render_template('partials/booking_error.html',
                              error='An error occurred while processing your booking'), 500
 
-@app.route('/webhook', methods=['GET', 'POST'])
+@app.route("/webhook", methods=["GET", "POST"])
 def webhook():
-    if request.method == 'GET':
-        # Facebook sends: hub.verify_token and hub.challenge
-        token_sent = request.args.get('hub.verify_token')
-        challenge = request.args.get('hub.challenge')
-        
-        # Check if token matches
+    if request.method == "GET":
+        # Facebook verification
+        token_sent = request.args.get("hub.verify_token")
+        challenge = request.args.get("hub.challenge")
         if token_sent == VERIFY_TOKEN:
-            print("Webhook verified!")
-            return challenge  # Return challenge to complete verification
-        
-        print("Invalid token!")
-        return 'Invalid verification token', 403
-        
-    elif request.method == 'POST':
-        data = request.get_json()
-        print("Webhook received data:", data)
-        return "Event received", 200
+            return challenge  # ✅ Fixed!
+        return "Invalid verification token", 403
+    elif request.method == "POST":
+        # Handle incoming webhook data
+        try:
+            data = request.get_json()
+            if data:
+                print("Webhook event received:", data)
+                # You can later process or store this data in PostgreSQL here
+            return jsonify({"status": "ok"}), 200
+        except Exception as e:
+            print("Error handling webhook:", e)
+            return jsonify({"status": "error", "message": str(e)}), 500
 
 def init_db():
     """Initialize database with sample data"""
