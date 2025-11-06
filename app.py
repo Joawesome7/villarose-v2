@@ -14,6 +14,7 @@ app = Flask(__name__)
 
 # Configuration
 app.secret_key = os.environ.get("SECRET_KEY", "dev-fallback-key-unsafe")
+VERIFY_TOKEN = os.environ.get("VERIFY_TOKEN") 
 
 # Database setup
 database_url = os.environ.get("DATABASE_URL")
@@ -427,6 +428,25 @@ def confirm_booking():
         return render_template('partials/booking_error.html',
                              error='An error occurred while processing your booking'), 500
 
+@app.route('/webhook', methods=['GET', 'POST'])
+def webhook():
+    if request.method == 'GET':
+        # Facebook sends: hub.verify_token and hub.challenge
+        token_sent = request.args.get('hub.verify_token')
+        challenge = request.args.get('hub.challenge')
+        
+        # Check if token matches
+        if token_sent == VERIFY_TOKEN:
+            print("Webhook verified!")
+            return challenge  # Return challenge to complete verification
+        
+        print("Invalid token!")
+        return 'Invalid verification token', 403
+        
+    elif request.method == 'POST':
+        data = request.get_json()
+        print("Webhook received data:", data)
+        return "Event received", 200
 
 def init_db():
     """Initialize database with sample data"""
