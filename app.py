@@ -435,13 +435,18 @@ def webhook():
         token_sent = request.args.get("hub.verify_token")
         challenge = request.args.get("hub.challenge")
         
-        print(f"Verification attempt - Token received: {token_sent}")
+        print(f"Verification attempt - Token: {token_sent}, Challenge: {challenge}")
+        
+        # Check if both token and challenge exist
+        if not token_sent or not challenge:
+            print("❌ Missing token or challenge")
+            return "Missing verification parameters", 400
         
         if token_sent == VERIFY_TOKEN:
-            print("Webhook verified!")
+            print("✅ Webhook verified!")
             return challenge
         else:
-            print("Invalid token")
+            print("❌ Invalid token")
             return "Invalid verification token", 403
     
     elif request.method == "POST":
