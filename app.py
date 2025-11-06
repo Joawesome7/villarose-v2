@@ -428,39 +428,37 @@ def confirm_booking():
         return render_template('partials/booking_error.html',
                              error='An error occurred while processing your booking'), 500
 
+
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
     if request.method == "GET":
-        # Facebook verification
+        # Handle initial verification only
         token_sent = request.args.get("hub.verify_token")
         challenge = request.args.get("hub.challenge")
-        
-        print(f"Verification attempt - Token: {token_sent}, Challenge: {challenge}")
-        
-        # Check if both token and challenge exist
-        if not token_sent or not challenge:
-            print("❌ Missing token or challenge")
-            return "Missing verification parameters", 400
-        
-        if token_sent == VERIFY_TOKEN:
-            print("✅ Webhook verified!")
-            return challenge
+
+        if token_sent and challenge:
+            if token_sent == VERIFY_TOKEN:
+                print("✅ Webhook verified successfully.")
+                return challenge, 200
+            else:
+                print("❌ Invalid verify token.")
+                return "Invalid verification token", 403
         else:
-            print("❌ Invalid token")
-            return "Invalid verification token", 403
-    
+            # This is likely a health check or empty GET
+            return "Webhook endpoint active.", 200
+
     elif request.method == "POST":
         # Handle incoming webhook data
         try:
             data = request.get_json()
             if data:
-                print("Webhook event received:", data)
+                print("📩 Webhook event received:", data)
+                # You can add PostgreSQL insertion or processing here later
             return jsonify({"status": "ok"}), 200
         except Exception as e:
-            print("Error handling webhook:", e)
+            print("💥 Error handling webhook:", e)
             return jsonify({"status": "error", "message": str(e)}), 500
-    
-    # Fallback for any other method
+
     return "Method not allowed", 405
 
 def init_db():
